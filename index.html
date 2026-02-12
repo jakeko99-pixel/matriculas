@@ -1,0 +1,516 @@
+<!doctype html>
+<html lang="es" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>PLATECOLLECTOR PRO</title>
+  
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Matrículas">
+  <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3082/3082649.png">
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=Space+Mono:wght@700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
+
+  <style>
+    :root { --accent: #eab308; --bg: #020617; }
+    body { 
+      font-family: 'Plus Jakarta Sans', sans-serif; 
+      background-color: var(--bg); 
+      color: white; 
+      -webkit-tap-highlight-color: transparent;
+      overflow: hidden;
+    }
+    .font-mono { font-family: 'Space Mono', monospace; }
+    
+    /* Estilos Premium */
+    .glass-card { background: rgba(30, 41, 59, 0.75); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.1); }
+    .neo-btn { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+    .neo-btn:active { transform: scale(0.92); }
+    
+    /* Barras de Progreso */
+    .progress-bar-bg { background: rgba(255,255,255,0.1); border-radius: 99px; overflow: hidden; }
+    .progress-fill { transition: width 1s ease-in-out; height: 100%; border-radius: 99px; }
+    
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    @keyframes slideUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    .animate-up { animation: slideUp 0.4s ease-out forwards; }
+    
+    /* Z-Index fix para que nada tape el teclado */
+    #global-modal, #profile-modal { z-index: 1000; }
+    #toast { z-index: 2000; }
+  </style>
+</head>
+<body class="h-full select-none">
+
+  <div id="login-screen" class="fixed inset-0 flex flex-col items-center justify-start p-6 bg-slate-950 overflow-y-auto z-[500]">
+    <div class="w-full max-w-md pt-12 space-y-10 animate-up">
+      <div class="text-center">
+        <h1 class="text-5xl font-extrabold tracking-tighter italic text-yellow-500">PLATE<span class="text-white">COLLECTOR</span></h1>
+        <p class="text-slate-500 text-[10px] font-bold uppercase tracking-[0.5em] mt-2">The Family Challenge 2026</p>
+      </div>
+
+      <div class="glass-card rounded-[3rem] p-8 space-y-6 shadow-2xl border-white/5">
+        <p class="text-center text-xs font-black text-slate-400 uppercase tracking-widest">Selecciona tu perfil</p>
+        <div class="grid grid-cols-1 gap-4">
+          <button onclick="handleLoginRequest('NOA')" class="neo-btn bg-blue-600/10 p-5 rounded-3xl flex items-center justify-between border border-blue-500/20">
+            <div class="flex items-center gap-4">
+              <div id="home-avatar-NOA" class="w-14 h-14 rounded-full bg-blue-600 flex items-center justify-center text-2xl shadow-lg overflow-hidden border-2 border-white/10">🚙</div>
+              <span class="text-2xl font-black italic">NOA</span>
+            </div>
+            <i class="fas fa-chevron-right text-slate-700"></i>
+          </button>
+          <button onclick="handleLoginRequest('ERIK')" class="neo-btn bg-purple-600/10 p-5 rounded-3xl flex items-center justify-between border border-purple-500/20">
+            <div class="flex items-center gap-4">
+              <div id="home-avatar-ERIK" class="w-14 h-14 rounded-full bg-purple-600 flex items-center justify-center text-2xl shadow-lg overflow-hidden border-2 border-white/10">🏎️</div>
+              <span class="text-2xl font-black italic">ERIK</span>
+            </div>
+            <i class="fas fa-chevron-right text-slate-700"></i>
+          </button>
+          <button onclick="handleLoginRequest('FER')" class="neo-btn bg-red-600/10 p-5 rounded-3xl flex items-center justify-between border border-red-500/20">
+            <div class="flex items-center gap-4">
+              <div id="home-avatar-FER" class="w-14 h-14 rounded-full bg-red-600 flex items-center justify-center text-2xl shadow-lg overflow-hidden border-2 border-white/10">🚗</div>
+              <span class="text-2xl font-black italic">FER</span>
+            </div>
+            <i class="fas fa-chevron-right text-slate-700"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <button onclick="showGlobalStats('ranking')" class="glass-card p-6 rounded-[2.5rem] flex flex-col items-center gap-3 neo-btn">
+          <div class="w-12 h-12 rounded-full bg-yellow-500/20 flex items-center justify-center text-yellow-500 text-xl"><i class="fas fa-trophy"></i></div>
+          <span class="text-[10px] font-black uppercase text-slate-400">Ranking</span>
+        </button>
+        <button onclick="showGlobalStats('progress')" class="glass-card p-6 rounded-[2.5rem] flex flex-col items-center gap-3 neo-btn">
+          <div class="w-12 h-12 rounded-full bg-cyan-500/20 flex items-center justify-center text-cyan-500 text-xl"><i class="fas fa-chart-pie"></i></div>
+          <span class="text-[10px] font-black uppercase text-slate-400">Progreso</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="global-modal" class="fixed inset-0 bg-slate-950 hidden flex flex-col">
+    <div class="p-6 flex justify-between items-center border-b border-white/5 pt-12">
+      <h2 id="modal-title" class="text-2xl font-black italic text-yellow-500 uppercase tracking-tighter"></h2>
+      <button onclick="closeModal()" class="w-12 h-12 rounded-full bg-slate-900 flex items-center justify-center border border-white/10 text-xl"><i class="fas fa-times"></i></button>
+    </div>
+    
+    <div id="progress-header" class="p-6 pb-2 hidden">
+      <div class="mb-6">
+        <div class="flex justify-between text-[11px] font-black uppercase mb-2 text-slate-400"><span>Colección Colectiva</span><span id="global-percent">0%</span></div>
+        <div class="progress-bar-bg h-5 border border-white/5"><div id="global-progress-fill" class="progress-fill bg-gradient-to-r from-yellow-500 via-orange-500 to-red-600" style="width: 0%"></div></div>
+      </div>
+      <div class="flex gap-4 overflow-x-auto no-scrollbar py-4" id="block-progress-list"></div>
+      <div class="flex bg-slate-900 p-1.5 rounded-2xl mt-4 border border-white/5">
+        <button onclick="setModalTab('got')" id="tab-got" class="flex-1 py-3 rounded-xl text-[10px] font-black uppercase transition-all">Conseguidas</button>
+        <button onclick="setModalTab('missing')" id="tab-missing" class="flex-1 py-3 rounded-xl text-[10px] font-black uppercase transition-all">Pendientes</button>
+      </div>
+    </div>
+
+    <div id="modal-content" class="flex-grow p-6 overflow-y-auto no-scrollbar pb-20"></div>
+  </div>
+
+  <div id="profile-modal" class="fixed inset-0 bg-slate-950 hidden flex flex-col p-6 overflow-y-auto">
+    <div class="flex justify-between items-center mb-8 pt-10">
+      <h2 class="text-2xl font-black italic">AJUSTES DE PERFIL</h2>
+      <button onclick="document.getElementById('profile-modal').classList.add('hidden')" class="w-12 h-12 rounded-full bg-slate-900 flex items-center justify-center text-xl"><i class="fas fa-times"></i></button>
+    </div>
+
+    <div class="space-y-10 max-w-sm mx-auto w-full">
+      <div class="text-center bg-slate-900 p-8 rounded-[3rem] border border-yellow-500/20 shadow-2xl">
+        <p id="setup-name" class="text-3xl font-black mb-2 text-white italic"></p>
+        <div id="my-rank-display" class="inline-block px-5 py-1.5 rounded-full bg-yellow-500 text-black text-[10px] font-black uppercase tracking-widest shadow-lg">RECLUTA</div>
+      </div>
+
+      <div class="space-y-4">
+        <p class="text-center text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Cambiar Imagen</p>
+        <div class="grid grid-cols-4 gap-4" id="avatar-grid">
+          <div onclick="selectAvatar('🚀')" class="avatar-option w-16 h-16 rounded-full glass-card flex items-center justify-center text-3xl cursor-pointer border-2 border-transparent">🚀</div>
+          <div onclick="selectAvatar('🏎️')" class="avatar-option w-16 h-16 rounded-full glass-card flex items-center justify-center text-3xl cursor-pointer border-2 border-transparent">🏎️</div>
+          <div onclick="selectAvatar('🚙')" class="avatar-option w-16 h-16 rounded-full glass-card flex items-center justify-center text-3xl cursor-pointer border-2 border-transparent">🚙</div>
+          <label class="w-16 h-16 rounded-full border-2 border-dashed border-slate-700 flex items-center justify-center cursor-pointer bg-slate-900 hover:border-yellow-500 transition-colors">
+            <i class="fas fa-camera text-slate-500 text-xl"></i>
+            <input type="file" id="upload-avatar" class="hidden" accept="image/*" onchange="handleAvatarUpload(this)">
+          </label>
+        </div>
+      </div>
+
+      <div class="space-y-4">
+        <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest border-b border-white/10 pb-2">Historial Reciente (Borrar errores)</p>
+        <div id="recent-history" class="space-y-3 max-h-52 overflow-y-auto no-scrollbar"></div>
+      </div>
+
+      <button onclick="saveAndLogin()" class="w-full bg-yellow-500 text-black py-6 rounded-3xl font-black shadow-2xl neo-btn text-lg">GUARDAR CAMBIOS</button>
+    </div>
+  </div>
+
+  <div id="app" class="h-full flex flex-col hidden bg-[#020617]">
+    <header class="p-6 pt-12 flex items-center justify-between">
+      <button onclick="location.reload()" class="w-12 h-12 rounded-full glass-card flex items-center justify-center text-slate-400 text-xl"><i class="fas fa-sign-out-alt"></i></button>
+      <div class="flex items-center gap-3">
+        <div class="flex flex-col items-end">
+          <span id="my-name" class="font-black text-lg italic leading-none"></span>
+          <span id="my-rank-label" class="text-[9px] font-black text-yellow-500 uppercase tracking-tighter"></span>
+        </div>
+        <div id="my-avatar" class="w-12 h-12 rounded-full flex items-center justify-center bg-yellow-500 text-black text-2xl overflow-hidden shadow-2xl border-2 border-white/10"></div>
+        <button onclick="openProfileSetup(currentUser)" class="w-12 h-12 rounded-full glass-card flex items-center justify-center text-yellow-500 border border-yellow-500/20 text-xl"><i class="fas fa-cog"></i></button>
+      </div>
+    </header>
+
+    <div class="px-6 grid grid-cols-2 gap-4 mb-6">
+      <div class="glass-card p-5 rounded-[2rem] border-l-4 border-yellow-500 relative overflow-hidden">
+        <p class="text-[10px] font-black text-slate-500 uppercase mb-1">Mis Puntos</p>
+        <p id="my-points" class="text-4xl font-black">0</p>
+        <i class="fas fa-star absolute right-4 bottom-4 text-white/5 text-4xl"></i>
+      </div>
+      <div class="glass-card p-5 rounded-[2rem] border-l-4 border-cyan-500 relative overflow-hidden">
+        <p class="text-[10px] font-black text-slate-500 uppercase mb-1">Capturas</p>
+        <p id="my-count" class="text-4xl font-black">0</p>
+        <i class="fas fa-check-circle absolute right-4 bottom-4 text-white/5 text-4xl"></i>
+      </div>
+    </div>
+
+    <div class="flex overflow-x-auto no-scrollbar gap-3 px-6 mb-6">
+      <script>
+        for(let i=0; i<=9; i++) {
+          document.write(`<button onclick="filterBlock(${i})" id="block-btn-${i}" class="min-w-[58px] h-[58px] rounded-2xl glass-card flex items-center justify-center font-mono font-black text-slate-500 border-2 border-transparent block-filter transition-all text-xl">${i}</button>`);
+        }
+      </script>
+    </div>
+
+    <main class="flex-grow px-6 overflow-hidden relative">
+      <div id="view-input" class="view-section h-full flex flex-col items-center justify-start pt-4">
+        <div class="bg-white text-black w-full max-w-[300px] h-28 rounded-[2.5rem] flex items-center justify-center mb-8 shadow-[0_20px_60px_rgba(0,0,0,0.6)] border-[8px] border-slate-300">
+          <span id="input-display" class="font-mono text-7xl font-black tracking-[0.1em]">____</span>
+        </div>
+        <div class="grid grid-cols-3 gap-4 w-full max-w-[320px]">
+          <script>
+            [1,2,3,4,5,6,7,8,9].forEach(n => document.write(`<button onclick="pressNum('${n}')" class="h-16 rounded-3xl glass-card text-3xl font-black neo-btn border border-white/5 bg-slate-900/60">${n}</button>`));
+          </script>
+          <button onclick="resetInput()" class="h-16 rounded-3xl bg-red-600/20 text-red-500 border border-red-500/20 neo-btn text-2xl"><i class="fas fa-backspace"></i></button>
+          <button onclick="pressNum('0')" class="h-16 rounded-3xl glass-card text-3xl font-black neo-btn border border-white/5 bg-slate-900/60">0</button>
+          <button onclick="submitPlate()" class="h-16 rounded-3xl bg-yellow-500 text-black text-3xl shadow-2xl neo-btn"><i class="fas fa-check"></i></button>
+        </div>
+      </div>
+      
+      <div id="view-list" class="view-section h-full hidden overflow-y-auto no-scrollbar space-y-4 pb-24"></div>
+      <div id="view-ranking" class="view-section h-full hidden overflow-y-auto no-scrollbar space-y-4 pb-24"></div>
+      <div id="view-missing" class="view-section h-full hidden overflow-y-auto no-scrollbar pb-24"><div id="missing-grid" class="grid grid-cols-5 gap-2"></div></div>
+    </main>
+
+    <footer class="fixed bottom-6 left-6 right-6 z-[100]">
+      <div class="glass-card rounded-[3rem] h-20 flex items-center justify-around border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
+        <button onclick="switchView('input')" class="nav-btn w-16 h-16 flex items-center justify-center text-yellow-500" id="nav-input"><i class="fas fa-plus-circle text-4xl"></i></button>
+        <button onclick="switchView('list')" class="nav-btn w-16 h-16 flex items-center justify-center text-slate-500" id="nav-list"><i class="fas fa-list-ul text-2xl"></i></button>
+        <button onclick="switchView('ranking')" class="nav-btn w-16 h-16 flex items-center justify-center text-slate-500" id="nav-ranking"><i class="fas fa-trophy text-2xl"></i></button>
+        <button onclick="switchView('missing')" class="nav-btn w-16 h-16 flex items-center justify-center text-slate-500" id="nav-missing"><i class="fas fa-search text-2xl"></i></button>
+      </div>
+    </footer>
+
+    <div id="toast" class="fixed top-14 left-6 right-6 py-5 rounded-[2rem] font-black text-center shadow-2xl hidden animate-up"></div>
+  </div>
+
+  <script>
+    // --- FIREBASE CONFIG (No tocar) ---
+    const firebaseConfig = {
+      apiKey: "AIzaSyBXC7118AZ_gPRVES21X1vmbVQTj2f2064",
+      authDomain: "el-coleccionista-de-matriculas.firebaseapp.com",
+      databaseURL: "https://el-coleccionista-de-matriculas-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "el-coleccionista-de-matriculas",
+      storageBucket: "el-coleccionista-de-matriculas.firebasestorage.app",
+      messagingSenderId: "812678497398",
+      appId: "1:812678497398:web:c94746b6431db5bc0b57"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    // --- VARIABLES DE ESTADO ---
+    let currentUser = null;
+    let currentAvatar = "🚀";
+    let allPlatesData = [];
+    let inputBuffer = "";
+    let currentFilterBlock = null;
+    let modalTab = 'got';
+    let modalBlock = 0;
+
+    const LEVELS = [
+      { min: 0, name: "Recluta" },
+      { min: 100, name: "Explorador" },
+      { min: 300, name: "Cazador" },
+      { min: 750, name: "Experto" },
+      { min: 1500, name: "Cazador Élite" },
+      { min: 3000, name: "Maestro de la Vía" },
+      { min: 6000, name: "Leyenda" }
+    ];
+
+    // --- INICIO ---
+    window.onload = () => {
+      ['NOA', 'ERIK', 'FER'].forEach(id => {
+        const saved = localStorage.getItem(`avatar_${id}`);
+        if(saved) document.getElementById(`home-avatar-${id}`).innerHTML = saved.startsWith('data:image') ? `<img src="${saved}" class="w-full h-full object-cover">` : saved;
+      });
+      listenToFirebase();
+    };
+
+    function handleLoginRequest(name) {
+      if(!name) return;
+      currentUser = name.toUpperCase();
+      const saved = localStorage.getItem(`avatar_${currentUser}`);
+      if(saved) { currentAvatar = saved; confirmLogin(); } 
+      else { openProfileSetup(currentUser); }
+    }
+
+    function openProfileSetup(name) {
+      currentUser = name.toUpperCase();
+      document.getElementById('setup-name').textContent = currentUser;
+      document.getElementById('profile-modal').classList.remove('hidden');
+      renderHistory();
+      updateRankDisplay();
+    }
+
+    function selectAvatar(icon) {
+      currentAvatar = icon;
+      document.querySelectorAll('.avatar-option').forEach(el => el.classList.remove('border-yellow-500', 'bg-yellow-500/20'));
+      event.currentTarget.classList.add('border-yellow-500', 'bg-yellow-500/20');
+    }
+
+    function handleAvatarUpload(input) {
+      if (input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          currentAvatar = `<img src="${e.target.result}" class="w-full h-full object-cover">`;
+          saveAndLogin();
+        };
+        reader.readAsDataURL(input.files[0]);
+      }
+    }
+
+    function saveAndLogin() {
+      let val = currentAvatar.includes('<img') ? currentAvatar.match(/src="([^"]+)"/)[1] : currentAvatar;
+      localStorage.setItem(`avatar_${currentUser}`, val);
+      confirmLogin();
+      document.getElementById('profile-modal').classList.add('hidden');
+    }
+
+    function confirmLogin() {
+      document.getElementById('login-screen').classList.add('hidden');
+      document.getElementById('app').classList.remove('hidden');
+      document.getElementById('my-name').textContent = currentUser;
+      document.getElementById('my-avatar').innerHTML = currentAvatar.startsWith('data:image') ? `<img src="${currentAvatar}" class="w-full h-full object-cover">` : currentAvatar;
+      updateStats();
+    }
+
+    function updateRankDisplay() {
+      const pts = allPlatesData.filter(p => p.player === currentUser).reduce((a,b)=>a+b.points,0);
+      const rank = [...LEVELS].reverse().find(l => pts >= l.min);
+      document.getElementById('my-rank-display').textContent = rank.name;
+      document.getElementById('my-rank-label').textContent = rank.name;
+    }
+
+    function listenToFirebase() {
+      db.ref('plates').on('value', (snap) => {
+        const val = snap.val();
+        allPlatesData = val ? Object.values(val) : [];
+        if(currentUser) { updateStats(); updateRankDisplay(); }
+        if(!document.getElementById('global-modal').classList.contains('hidden')) refreshModal();
+      });
+    }
+
+    function updateStats() {
+      const mine = allPlatesData.filter(p => p.player === currentUser);
+      document.getElementById('my-points').textContent = mine.reduce((a,b)=>a+b.points,0);
+      document.getElementById('my-count').textContent = mine.length;
+      
+      const totalUnique = new Set(allPlatesData.map(p => p.plate)).size;
+      const perc = (totalUnique / 10000 * 100).toFixed(1);
+      document.getElementById('global-progress-fill').style.width = perc + "%";
+      document.getElementById('global-percent').textContent = perc + "%";
+      
+      for(let i=0; i<=9; i++) {
+        const has = allPlatesData.some(p => p.plate.startsWith(i.toString()));
+        document.getElementById(`block-btn-${i}`).classList.toggle('text-yellow-500', has);
+        document.getElementById(`block-btn-${i}`).classList.toggle('border-yellow-500/30', has);
+      }
+    }
+
+    // --- MODALES (RANKING Y PROGRESO) ---
+    function showGlobalStats(type) {
+      const m = document.getElementById('global-modal');
+      const header = document.getElementById('progress-header');
+      m.classList.remove('hidden');
+      if(type === 'ranking') {
+        document.getElementById('modal-title').textContent = "RANKING TOP";
+        header.classList.add('hidden');
+        document.getElementById('modal-content').innerHTML = getRankingHTML();
+      } else {
+        document.getElementById('modal-title').textContent = "COLECCIÓN";
+        header.classList.remove('hidden');
+        renderBlockBars();
+        setModalBlock(0);
+        setModalTab('got');
+      }
+    }
+
+    function renderBlockBars() {
+      const container = document.getElementById('block-progress-list');
+      container.innerHTML = "";
+      for(let i=0; i<=9; i++) {
+        const count = new Set(allPlatesData.filter(p => p.plate.startsWith(i.toString())).map(p=>p.plate)).size;
+        const perc = (count / 1000 * 100).toFixed(0);
+        const div = document.createElement('div');
+        div.onclick = () => setModalBlock(i);
+        div.className = `min-w-[100px] p-4 rounded-3xl bg-slate-900 border-2 transition-all ${modalBlock === i ? 'border-yellow-500':'border-white/5'}`;
+        div.innerHTML = `<p class="text-[9px] font-black text-slate-500 mb-1">SERIE ${i}</p><p class="text-sm font-black mb-2">${perc}%</p>
+          <div class="progress-bar-bg h-2"><div class="progress-fill bg-yellow-500" style="width:${perc}%"></div></div>`;
+        container.appendChild(div);
+      }
+    }
+
+    function setModalBlock(b) { modalBlock = b; renderBlockBars(); refreshModal(); }
+    
+    function setModalTab(t) { 
+      modalTab = t; 
+      document.getElementById('tab-got').className = t==='got'?'flex-1 py-3 rounded-xl text-[11px] font-black bg-yellow-500 text-black shadow-lg':'flex-1 py-3 rounded-xl text-[11px] font-black text-slate-500';
+      document.getElementById('tab-missing').className = t==='missing'?'flex-1 py-3 rounded-xl text-[11px] font-black bg-yellow-500 text-black shadow-lg':'flex-1 py-3 rounded-xl text-[11px] font-black text-slate-500';
+      refreshModal(); 
+    }
+
+    function refreshModal() {
+      const content = document.getElementById('modal-content');
+      if(document.getElementById('modal-title').textContent.includes("RANKING")) {
+        content.innerHTML = getRankingHTML(); return;
+      }
+      const seen = new Set();
+      const blockData = [];
+      allPlatesData.filter(p => p.plate.startsWith(modalBlock.toString())).forEach(p => {
+        if(!seen.has(p.plate)) { seen.add(p.plate); blockData.push(p); }
+      });
+
+      if(modalTab === 'got') {
+        content.innerHTML = blockData.sort((a,b)=>a.plate.localeCompare(b.plate)).map(p => `
+          <div class="glass-card p-5 rounded-3xl flex justify-between items-center mb-3 border-l-4 border-yellow-500">
+            <span class="font-mono text-2xl font-black italic">${p.plate}</span>
+            <span class="text-[10px] font-black text-slate-500 uppercase">${p.player}</span>
+          </div>`).join('') || '<p class="text-center text-slate-700 py-10 font-bold uppercase text-xs">Aún no hay capturas aquí</p>';
+      } else {
+        let html = '<div class="grid grid-cols-4 gap-3">';
+        for(let i=modalBlock*1000; i<(modalBlock*1000)+1000; i++) {
+          const s = i.toString().padStart(4, '0');
+          if(!seen.has(s)) html += `<div class="bg-slate-900/50 rounded-2xl py-3 text-center text-xs font-mono text-slate-600 border border-white/5">${s}</div>`;
+        }
+        content.innerHTML = html + "</div>";
+      }
+    }
+
+    function getRankingHTML() {
+      const p = {};
+      allPlatesData.forEach(x => { if(!p[x.player]) p[x.player] = { pts: 0, count: 0 }; p[x.player].pts += x.points; p[x.player].count++; });
+      return Object.entries(p).sort((a,b)=>b[1].pts - a[1].pts).map(([name, d], i) => `
+        <div class="glass-card p-6 rounded-[2.5rem] flex justify-between items-center mb-4 border border-white/5 shadow-2xl">
+          <div class="flex items-center gap-5">
+            <span class="text-4xl font-black ${i===0?'text-yellow-500':'text-slate-800'} italic">${i+1}</span>
+            <div><p class="font-black text-xl italic">${name}</p><p class="text-[10px] text-slate-500 uppercase font-black tracking-widest">${d.count} CAPTURAS</p></div>
+          </div>
+          <div class="text-right"><p class="text-3xl font-black text-yellow-500">${d.pts}</p><p class="text-[9px] font-black text-slate-600 uppercase">Puntos</p></div>
+        </div>`).join('') || '<p class="text-center text-slate-500 py-10 font-black">ESPERANDO DATOS...</p>';
+    }
+
+    function renderHistory() {
+      const mine = allPlatesData.filter(p => p.player === currentUser).sort((a,b)=>b.timestamp-a.timestamp).slice(0, 15);
+      const container = document.getElementById('recent-history');
+      container.innerHTML = mine.map(p => `
+        <div class="bg-slate-900/80 p-4 rounded-2xl flex justify-between items-center border border-white/5">
+          <span class="font-mono font-black text-xl italic">${p.plate}</span>
+          <button onclick="deletePlate('${p.plate}')" class="text-white w-10 h-10 rounded-xl bg-red-600/20 text-red-500"><i class="fas fa-trash-alt"></i></button>
+        </div>`).join('') || '<p class="text-center text-slate-800 text-[10px] py-4 uppercase font-black">Sin actividad reciente</p>';
+    }
+
+    function deletePlate(plate) {
+      if(confirm(`¿Quieres borrar la matrícula ${plate}?`)) {
+        db.ref('plates/' + `${currentUser}_${plate}`).remove().then(() => {
+          showToast("Matrícula eliminada", "bg-red-600/90 text-white");
+          renderHistory();
+        });
+      }
+    }
+
+    function closeModal() { document.getElementById('global-modal').classList.add('hidden'); }
+
+    // --- LOGICA DE CAZA ---
+    function pressNum(n) { if(inputBuffer.length < 4) { inputBuffer += n; document.getElementById('input-display').textContent = inputBuffer.padEnd(4, '_'); } }
+    function resetInput() { inputBuffer = ""; document.getElementById('input-display').textContent = "____"; }
+
+    function submitPlate() {
+      if(inputBuffer.length !== 4) return;
+      const plate = inputBuffer;
+      if(allPlatesData.some(p => p.player === currentUser && p.plate === plate)) {
+        showToast("⚠️ YA LA TIENES", "bg-orange-500 text-white"); return resetInput();
+      }
+      const isNew = !allPlatesData.some(p => p.plate === plate);
+      const pts = calculatePoints(plate);
+      db.ref('plates/' + `${currentUser}_${plate}`).set({ player: currentUser, plate: plate, points: pts, timestamp: Date.now() }).then(() => {
+        showToast(isNew ? "🌟 ¡NUEVA COLECTIVA! +"+pts : "✅ CAPTURADA +"+pts, isNew ? "bg-blue-600 text-white":"bg-green-600 text-white");
+        resetInput();
+      });
+    }
+
+    function calculatePoints(p) {
+      const d = p.split('').map(Number);
+      const allS = d.every(v => v === d[0]);
+      const sum = d.reduce((a,b)=>a+b, 0);
+      if(sum === 15 && allS) return 26;
+      if(sum === 15) return 16;
+      return allS ? 10 : 1;
+    }
+
+    function switchView(v) {
+      document.querySelectorAll('.view-section').forEach(s => s.classList.add('hidden'));
+      document.getElementById('view-'+v).classList.remove('hidden');
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.replace('text-yellow-500', 'text-slate-500'));
+      document.getElementById('nav-'+v).classList.replace('text-slate-500', 'text-yellow-500');
+      
+      if(v === 'list') {
+        const mine = allPlatesData.filter(p => p.player === currentUser).sort((a,b)=>b.timestamp-a.timestamp);
+        document.getElementById('view-list').innerHTML = mine.map(p => `
+          <div class="glass-card p-6 rounded-[2.5rem] flex justify-between items-center border-l-4 border-yellow-500 shadow-xl">
+            <span class="font-mono text-3xl font-black italic tracking-tighter">${p.plate}</span>
+            <span class="bg-yellow-500/10 text-yellow-500 px-4 py-1.5 rounded-full text-xs font-black">+${p.points} PTS</span>
+          </div>`).join('') || '<p class="text-center text-slate-500 pt-20 font-black uppercase tracking-widest">Nada capturado aún</p>';
+      }
+      if(v === 'ranking') document.getElementById('view-ranking').innerHTML = getRankingHTML();
+      if(v === 'missing') renderMissing();
+    }
+
+    function renderMissing() {
+      const grid = document.getElementById('missing-grid');
+      if(currentFilterBlock === null) return grid.innerHTML = '<p class="col-span-5 text-center text-slate-600 pt-20 uppercase text-xs font-black tracking-[0.2em]">Selecciona un bloque arriba</p>';
+      const seen = new Set(allPlatesData.map(p => p.plate));
+      let h = "";
+      for(let i=currentFilterBlock*1000; i<(currentFilterBlock*1000)+1000; i++) {
+        const s = i.toString().padStart(4, '0');
+        if(!seen.has(s)) h += `<div class="bg-slate-900 rounded-2xl py-3 text-center text-xs font-mono text-slate-600 border border-white/5">${s}</div>`;
+      }
+      grid.innerHTML = h || '<p class="col-span-5 text-green-500 text-center font-black pt-10">¡TODO EL BLOQUE CAPTURADO!</p>';
+    }
+
+    function filterBlock(n) {
+      currentFilterBlock = n;
+      document.querySelectorAll('.block-filter').forEach(b => b.classList.remove('border-yellow-500', 'text-yellow-500', 'bg-yellow-500/10'));
+      document.getElementById(`block-btn-${n}`).classList.add('border-yellow-500', 'text-yellow-500', 'bg-yellow-500/10');
+      if(!document.getElementById('view-missing').classList.contains('hidden')) renderMissing();
+    }
+
+    function showToast(m, c) {
+      const t = document.getElementById('toast');
+      t.textContent = m; t.className = `fixed top-14 left-6 right-6 py-5 rounded-[2rem] font-black text-center shadow-2xl z-[2000] animate-up ${c}`;
+      t.classList.remove('hidden'); setTimeout(() => t.classList.add('hidden'), 3000);
+    }
+  </script>
+</body>
+</html>
