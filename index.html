@@ -28,12 +28,23 @@
     }
     .font-mono { font-family: 'Space Mono', monospace; }
     
-    /* Estilos Premium */
+    /* Splash Screen Styles */
+    #splash-screen {
+      position: fixed;
+      inset: 0;
+      background: #020617;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+      transition: opacity 0.6s ease-out;
+    }
+
     .glass-card { background: rgba(30, 41, 59, 0.75); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.1); }
     .neo-btn { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
     .neo-btn:active { transform: scale(0.92); }
     
-    /* Barras de Progreso */
     .progress-bar-bg { background: rgba(255,255,255,0.1); border-radius: 99px; overflow: hidden; }
     .progress-fill { transition: width 1s ease-in-out; height: 100%; border-radius: 99px; }
     
@@ -41,18 +52,24 @@
     @keyframes slideUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
     .animate-up { animation: slideUp 0.4s ease-out forwards; }
     
-    /* Z-Index fix para que nada tape el teclado */
     #global-modal, #profile-modal { z-index: 1000; }
     #toast { z-index: 2000; }
   </style>
 </head>
 <body class="h-full select-none">
 
+  <div id="splash-screen">
+    <div class="animate-up flex flex-col items-center">
+      <img src="icono.png" alt="Logo" class="w-48 h-48 rounded-[2.5rem] shadow-[0_0_50px_rgba(234,179,8,0.3)] mb-6">
+      <h2 class="text-yellow-500 font-black italic tracking-[0.3em] text-sm uppercase">Cargando Desafío...</h2>
+    </div>
+  </div>
+
   <div id="login-screen" class="fixed inset-0 flex flex-col items-center justify-start p-6 bg-slate-950 overflow-y-auto z-[500]">
     <div class="w-full max-w-md pt-12 space-y-10 animate-up">
       <div class="text-center">
-        <h1 class="text-5xl font-extrabold tracking-tighter italic text-yellow-500">PLATE<span class="text-white">COLLECTOR</span></h1>
-        <p class="text-slate-500 text-[10px] font-bold uppercase tracking-[0.5em] mt-2">The Family Challenge 2026</p>
+        <h1 class="text-4xl font-extrabold tracking-tight italic text-yellow-500">PLATE<span class="text-white">COLLECTOR</span></h1>
+        <p class="text-slate-500 text-[9px] font-bold uppercase tracking-[0.4em] mt-2">The Family Challenge 2026</p>
       </div>
 
       <div class="glass-card rounded-[3rem] p-8 space-y-6 shadow-2xl border-white/5">
@@ -125,7 +142,7 @@
     <div class="space-y-10 max-w-sm mx-auto w-full">
       <div class="text-center bg-slate-900 p-8 rounded-[3rem] border border-yellow-500/20 shadow-2xl">
         <p id="setup-name" class="text-3xl font-black mb-2 text-white italic"></p>
-        <div id="my-rank-display" class="inline-block px-5 py-1.5 rounded-full bg-yellow-500 text-black text-[10px] font-black uppercase tracking-widest shadow-lg">RECLUTA</div>
+        <div id="my-rank-display" class="inline-block px-5 py-1.5 rounded-full bg-yellow-500 text-black text-[10px] font-black uppercase tracking-widest">RECLUTA</div>
       </div>
 
       <div class="space-y-4">
@@ -217,7 +234,7 @@
   </div>
 
   <script>
-    // --- FIREBASE CONFIG (No tocar) ---
+    // --- FIREBASE CONFIG ---
     const firebaseConfig = {
       apiKey: "AIzaSyBXC7118AZ_gPRVES21X1vmbVQTj2f2064",
       authDomain: "el-coleccionista-de-matriculas.firebaseapp.com",
@@ -249,8 +266,15 @@
       { min: 6000, name: "Leyenda" }
     ];
 
-    // --- INICIO ---
+    // --- MANEJO DE SPLASH SCREEN ---
     window.onload = () => {
+      // Ocultar Splash Screen después de 2.2 segundos
+      setTimeout(() => {
+        const splash = document.getElementById('splash-screen');
+        splash.style.opacity = '0';
+        setTimeout(() => splash.style.display = 'none', 600);
+      }, 2200);
+
       ['NOA', 'ERIK', 'FER'].forEach(id => {
         const saved = localStorage.getItem(`avatar_${id}`);
         if(saved) document.getElementById(`home-avatar-${id}`).innerHTML = saved.startsWith('data:image') ? `<img src="${saved}" class="w-full h-full object-cover">` : saved;
@@ -339,7 +363,6 @@
       }
     }
 
-    // --- MODALES (RANKING Y PROGRESO) ---
     function showGlobalStats(type) {
       const m = document.getElementById('global-modal');
       const header = document.getElementById('progress-header');
@@ -442,7 +465,6 @@
 
     function closeModal() { document.getElementById('global-modal').classList.add('hidden'); }
 
-    // --- LOGICA DE CAZA ---
     function pressNum(n) { if(inputBuffer.length < 4) { inputBuffer += n; document.getElementById('input-display').textContent = inputBuffer.padEnd(4, '_'); } }
     function resetInput() { inputBuffer = ""; document.getElementById('input-display').textContent = "____"; }
 
@@ -513,5 +535,4 @@
     }
   </script>
 </body>
-
 </html>
