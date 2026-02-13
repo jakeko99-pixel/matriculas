@@ -1,291 +1,236 @@
 <!doctype html>
-<html lang="es" class="h-full">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>PLATECOLLECTOR PRO</title>
     
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Matrículas">
-    <link rel="apple-touch-icon" href="icono.png">
-
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=Space+Mono:wght@700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
 
     <style>
         :root { --accent: #eab308; --bg: #020617; }
-        body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            background-color: var(--bg);
-            color: white;
-            -webkit-tap-highlight-color: transparent;
-            overflow: hidden;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-
-        /* Pantalla de Carga Ajustada */
-        #splash-screen {
-            position: fixed;
-            inset: 0;
-            background: #020617;
-            z-index: 100;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            transition: opacity 0.5s ease;
-        }
-        #splash-screen img {
-            width: 100%;
-            max-width: 500px;
-            height: auto;
-            object-fit: contain;
-        }
-
-        .glass-card { background: rgba(30, 41, 59, 0.75); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.1); }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: var(--bg); color: white; margin: 0; padding: 0; height: 100vh; overflow: hidden; }
         
-        /* Scroll lateral para bloques de matrículas */
-        .scroll-x {
-            display: flex;
-            overflow-x: auto;
-            scroll-snap-type: x mandatory;
-            gap: 0.5rem;
-            padding: 0.5rem;
-            -webkit-overflow-scrolling: touch;
-        }
+        .glass-card { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); }
+        
+        /* Portada mejorada */
+        #splash-screen { position: fixed; inset: 0; background: #020617; z-index: 1000; cursor: pointer; }
+        #splash-screen img { width: 100%; height: 100%; object-fit: cover; }
+
+        /* Botones de perfil con respuesta táctil */
+        .profile-btn { width: 100%; padding: 1rem; border-radius: 1rem; display: flex; items-center: center; gap: 1rem; margin-bottom: 0.75rem; cursor: pointer; transition: transform 0.1s; }
+        .profile-btn:active { transform: scale(0.95); background: rgba(255,255,255,0.1); }
+
+        .scroll-x { display: flex; overflow-x: auto; gap: 10px; padding: 10px 0; -webkit-overflow-scrolling: touch; }
         .scroll-x::-webkit-scrollbar { display: none; }
-        .block-item { scroll-snap-align: start; flex: 0 0 auto; }
 
-        .numpad-btn {
-            background: rgba(255,255,255,0.05);
-            aspect-ratio: 1/1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-            font-weight: 800;
-            border-radius: 1rem;
-            transition: all 0.1s;
-        }
-        .numpad-btn:active { background: var(--accent); color: black; transform: scale(0.9); }
-        
-        /* Ajuste para que la barra no tape */
-        main { flex: 1; overflow-y: auto; padding-bottom: 80px; }
-        nav { position: fixed; bottom: 0; left: 0; right: 0; height: 70px; background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(10px); }
+        .numpad-btn { background: rgba(255,255,255,0.05); height: 60px; display: flex; items-center: center; justify-content: center; font-size: 1.5rem; font-weight: 800; border-radius: 12px; cursor: pointer; }
+        .numpad-btn:active { background: var(--accent); color: black; }
+
+        .modal { position: fixed; inset: 0; background: #020617; z-index: 500; display: none; padding: 20px; }
+        .modal.active { display: block; }
     </style>
 </head>
-<body class="p-safe">
+<body class="flex flex-col">
 
-    <div id="splash-screen">
-        <img src="icono.png" alt="Logo">
-        <div class="mt-8 flex flex-col items-center">
-            <div class="w-12 h-12 border-4 border-yellow-500 border-t-transparent rounded-full animate-spin"></div>
-            <p class="mt-4 text-yellow-500 font-bold tracking-widest text-sm">CARGANDO...</p>
+    <div id="splash-screen" onclick="this.style.display='none'">
+        <img src="icono.png" alt="Portada">
+    </div>
+
+    <div id="profile-selection" class="fixed inset-0 z-[800] bg-slate-950 p-6 flex flex-col items-center justify-center overflow-y-auto">
+        <h1 class="text-3xl font-black mb-8 italic">PLATE <span class="text-yellow-500">COLLECTOR</span></h1>
+        
+        <div class="w-full max-w-xs">
+            <div id="perfiles-fijos">
+                <div onclick="selectProfile('Noa')" class="profile-btn glass-card border-l-4 border-orange-400">
+                    <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Noa" class="w-10 h-10 bg-white/10 rounded-full">
+                    <span class="font-bold text-lg">NOA</span>
+                </div>
+                <div onclick="selectProfile('Erik')" class="profile-btn glass-card border-l-4 border-cyan-400">
+                    <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Erik" class="w-10 h-10 bg-white/10 rounded-full">
+                    <span class="font-bold text-lg">ERIK</span>
+                </div>
+                <div onclick="selectProfile('Fer')" class="profile-btn glass-card border-l-4 border-yellow-400">
+                    <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Fer" class="w-10 h-10 bg-white/10 rounded-full">
+                    <span class="font-bold text-lg">FER</span>
+                </div>
+            </div>
+
+            <div class="h-px bg-white/10 my-6"></div>
+
+            <div class="glass-card p-4 rounded-2xl">
+                <p class="text-[10px] font-bold text-slate-500 uppercase mb-3">¿Eres un nuevo jugador?</p>
+                <input type="text" id="guest-name" placeholder="Escribe tu nombre..." class="w-full bg-slate-900 border border-white/10 p-3 rounded-xl mb-3 text-white focus:outline-none focus:border-yellow-500">
+                <button onclick="registerGuest()" class="w-full bg-white text-black font-black p-3 rounded-xl active:scale-95 transition-transform">REGISTRARSE Y JUGAR</button>
+            </div>
         </div>
     </div>
 
-    <div id="profile-selection" class="fixed inset-0 z-50 bg-slate-950 flex flex-col items-center justify-center p-6 text-center">
-        <h1 class="text-3xl font-black mb-2 italic">PLATE <span class="text-yellow-500 text-4xl">COLLECTOR</span></h1>
-        <p class="text-slate-400 mb-10">Selecciona tu usuario para sincronizar datos</p>
-        <div class="grid grid-cols-1 gap-6 w-full max-w-xs">
-            <button onclick="selectProfile('Noa')" class="glass-card p-4 rounded-2xl flex items-center gap-4 border-2 border-transparent hover:border-yellow-500 transition-all">
-                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Noa&backgroundColor=ffdfbf" class="w-14 h-14 rounded-full bg-white/10 p-1">
-                <div class="text-left"><p class="font-bold text-xl">NOA</p><p class="text-xs text-yellow-500">PRO COLLECTOR</p></div>
-            </button>
-            <button onclick="selectProfile('Erik')" class="glass-card p-4 rounded-2xl flex items-center gap-4 border-2 border-transparent hover:border-yellow-500 transition-all">
-                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Erik&backgroundColor=b6e3f4" class="w-14 h-14 rounded-full bg-white/10 p-1">
-                <div class="text-left"><p class="font-bold text-xl">ERIK</p><p class="text-xs text-yellow-500">ELITE HUNTER</p></div>
-            </button>
-            <button onclick="selectProfile('Fer')" class="glass-card p-4 rounded-2xl flex items-center gap-4 border-2 border-transparent hover:border-yellow-500 transition-all">
-                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Fer&backgroundColor=d1d5db" class="w-14 h-14 rounded-full bg-white/10 p-1">
-                <div class="text-left"><p class="font-bold text-xl">FER</p><p class="text-xs text-yellow-500">LEGEND</p></div>
-            </button>
-        </div>
-    </div>
-
-    <header class="p-4 flex justify-between items-center">
-        <button class="w-10 h-10 rounded-full glass-card flex items-center justify-center text-slate-400" onclick="logout()"><i class="fas fa-sign-out-alt"></i></button>
+    <header class="p-4 flex justify-between items-center bg-slate-900/50 pt-10">
         <div class="flex items-center gap-3">
-            <div class="text-right leading-tight">
-                <p id="user-name" class="font-black text-lg italic uppercase tracking-tighter"></p>
-                <p class="text-[10px] text-yellow-500 font-bold tracking-widest">RECLUTA</p>
+            <div class="w-10 h-10 rounded-full border-2 border-yellow-500 p-0.5">
+                <img id="user-avatar" src="" class="w-full h-full rounded-full bg-slate-800">
             </div>
-            <div class="w-12 h-12 rounded-full border-2 border-yellow-500 p-0.5 overflow-hidden">
-                <img id="user-avatar" src="" class="w-full h-full object-cover rounded-full">
-            </div>
+            <span id="user-name" class="font-black italic uppercase">---</span>
         </div>
-        <button class="w-10 h-10 rounded-full glass-card flex items-center justify-center text-yellow-500 shadow-lg shadow-yellow-500/20"><i class="fas fa-cog"></i></button>
+        <div class="text-right">
+            <p class="text-[8px] text-slate-500 font-bold uppercase">Mis Puntos</p>
+            <span id="user-points" class="text-2xl font-black text-yellow-500">0</span>
+        </div>
     </header>
 
-    <main class="px-4">
-        <div class="grid grid-cols-2 gap-4 mb-6">
-            <div class="glass-card p-4 rounded-[2rem] border-l-4 border-yellow-500">
-                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Mis Puntos</p>
-                <div class="flex items-end justify-between">
-                    <span id="user-points" class="text-4xl font-black italic">0</span>
-                    <i class="fas fa-star text-slate-700 text-xl"></i>
-                </div>
-            </div>
-            <div class="glass-card p-4 rounded-[2rem] border-l-4 border-cyan-500">
-                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Capturas</p>
-                <div class="flex items-end justify-between">
-                    <span id="user-captures" class="text-4xl font-black italic">0</span>
-                    <i class="fas fa-check-circle text-slate-700 text-xl"></i>
-                </div>
-            </div>
+    <main class="flex-1 overflow-y-auto p-4 pb-28">
+        <div class="scroll-x mb-6" id="blocks-container"></div>
+
+        <div class="glass-card rounded-[2.5rem] p-8 mb-6 text-center border-b-4 border-yellow-500/30">
+            <div id="display" class="text-6xl font-black tracking-widest text-white mb-2">____</div>
+            <p id="status-msg" class="text-[10px] text-slate-500 font-bold uppercase tracking-widest italic">Introduce 4 números</p>
         </div>
 
-        <div class="scroll-x mb-6" id="blocks-container">
-            </div>
-
-        <div class="glass-card rounded-[2.5rem] p-6 mb-6 text-center shadow-2xl relative overflow-hidden">
-            <div id="display" class="text-6xl font-black tracking-[0.2em] font-mono py-4">____</div>
-            <div class="flex justify-center gap-2 mt-2">
-                <div class="w-2 h-2 rounded-full bg-yellow-500 animate-pulse"></div>
-                <div class="w-2 h-2 rounded-full bg-yellow-500/30"></div>
-                <div class="w-2 h-2 rounded-full bg-yellow-500/30"></div>
-            </div>
-        </div>
-
-        <div class="grid grid-cols-3 gap-3 mb-4">
-            <button onclick="addNum(1)" class="numpad-btn">1</button>
-            <button onclick="addNum(2)" class="numpad-btn">2</button>
-            <button onclick="addNum(3)" class="numpad-btn">3</button>
-            <button onclick="addNum(4)" class="numpad-btn">4</button>
-            <button onclick="addNum(5)" class="numpad-btn">5</button>
-            <button onclick="addNum(6)" class="numpad-btn">6</button>
-            <button onclick="addNum(7)" class="numpad-btn">7</button>
-            <button onclick="addNum(8)" class="numpad-btn">8</button>
-            <button onclick="addNum(9)" class="numpad-btn">9</button>
-            <button onclick="clearLast()" class="numpad-btn bg-red-500/20 text-red-500"><i class="fas fa-backspace"></i></button>
-            <button onclick="addNum(0)" class="numpad-btn">0</button>
-            <button onclick="submitPlate()" class="numpad-btn bg-yellow-500 text-black col-span-1"><i class="fas fa-arrow-right"></i></button>
+        <div class="grid grid-cols-3 gap-3">
+            <div onclick="addNum(1)" class="numpad-btn">1</div>
+            <div onclick="addNum(2)" class="numpad-btn">2</div>
+            <div onclick="addNum(3)" class="numpad-btn">3</div>
+            <div onclick="addNum(4)" class="numpad-btn">4</div>
+            <div onclick="addNum(5)" class="numpad-btn">5</div>
+            <div onclick="addNum(6)" class="numpad-btn">6</div>
+            <div onclick="addNum(7)" class="numpad-btn">7</div>
+            <div onclick="addNum(8)" class="numpad-btn">8</div>
+            <div onclick="addNum(9)" class="numpad-btn">9</div>
+            <div onclick="clearLast()" class="numpad-btn text-red-500 bg-red-500/10"><i class="fas fa-backspace"></i></div>
+            <div onclick="addNum(0)" class="numpad-btn">0</div>
+            <div onclick="submitPlate()" class="numpad-btn bg-yellow-500 text-black"><i class="fas fa-check"></i></div>
         </div>
     </main>
 
-    <nav class="flex justify-around items-center px-6">
-        <button class="text-yellow-500 text-2xl flex flex-col items-center"><i class="fas fa-plus-circle"></i><span class="text-[10px] font-bold mt-1">NUEVA</span></button>
-        <button class="text-slate-500 text-2xl"><i class="fas fa-list-ul"></i></button>
-        <button class="text-slate-500 text-2xl"><i class="fas fa-trophy"></i></button>
-        <button class="text-slate-500 text-2xl"><i class="fas fa-search"></i></button>
+    <nav class="fixed bottom-0 inset-x-0 h-20 bg-slate-950 border-t border-white/5 flex justify-around items-center z-[900]">
+        <button onclick="closeModals()" class="text-yellow-500 flex flex-col items-center"><i class="fas fa-plus-circle text-xl"></i><span class="text-[10px] font-bold mt-1">NUEVA</span></button>
+        <button onclick="showSection('ranking')" class="text-slate-500 flex flex-col items-center"><i class="fas fa-trophy text-xl"></i><span class="text-[10px] font-bold mt-1">RANKING</span></button>
+        <button onclick="showSection('comun')" class="text-slate-500 flex flex-col items-center"><i class="fas fa-globe-europe text-xl"></i><span class="text-[10px] font-bold mt-1">COMÚN</span></button>
+        <button onclick="logout()" class="text-slate-500 flex flex-col items-center"><i class="fas fa-sign-out-alt text-xl"></i><span class="text-[10px] font-bold mt-1">SALIR</span></button>
     </nav>
 
+    <div id="modal-ranking" class="modal">
+        <div class="flex justify-between items-center mb-6 pt-10">
+            <h2 class="text-2xl font-black italic">RANKING <span class="text-yellow-500">PRO</span></h2>
+            <button onclick="closeModals()" class="w-10 h-10 bg-white/10 rounded-full text-xl">&times;</button>
+        </div>
+        <div id="ranking-list" class="grid gap-3"></div>
+    </div>
+
+    <div id="modal-comun" class="modal">
+        <div class="flex justify-between items-center mb-6 pt-10">
+            <h2 class="text-2xl font-black italic">MODO <span class="text-cyan-500">COMÚN</span></h2>
+            <button onclick="closeModals()" class="w-10 h-10 bg-white/10 rounded-full text-xl">&times;</button>
+        </div>
+        <div class="glass-card p-10 rounded-3xl text-center">
+            <p class="text-slate-400 font-bold uppercase text-xs mb-2">Capturas Totales Equipo</p>
+            <h3 id="total-global" class="text-7xl font-black text-cyan-400">0</h3>
+        </div>
+    </div>
+
     <script>
-        // CONFIGURACIÓN FIREBASE
-        const firebaseConfig = {
-            databaseURL: "https://el-coleccionista-de-matriculas-default-rtdb.europe-west1.firebasedatabase.app/"
-        };
+        const firebaseConfig = { databaseURL: "https://el-coleccionista-de-matriculas-default-rtdb.europe-west1.firebasedatabase.app/" };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
         let currentUser = null;
         let currentPlate = "";
 
-        // Inicializar bloques
-        const blocksContainer = document.getElementById('blocks-container');
-        for(let i=0; i<=9; i++) {
-            const div = document.createElement('div');
-            div.className = "block-item glass-card w-14 h-14 rounded-2xl flex items-center justify-center font-bold text-xl border-2 border-transparent";
-            div.id = `block-${i}`;
-            div.innerText = i;
-            blocksContainer.appendChild(div);
+        // Inicializar Bloques
+        const bCont = document.getElementById('blocks-container');
+        for(let i=0; i<=9; i++){
+            bCont.innerHTML += `<div id="block-${i}" class="glass-card min-w-[65px] h-[65px] rounded-2xl flex items-center justify-center font-bold text-xl border-2 border-transparent transition-all">${i}</div>`;
         }
 
         function selectProfile(name) {
             currentUser = name;
             localStorage.setItem('collector_user', name);
-            document.getElementById('profile-selection').classList.add('hidden');
+            document.getElementById('profile-selection').style.display = 'none';
             setupApp();
         }
 
-        function setupApp() {
-            const avatarMap = {
-                'Noa': 'https://api.dicebear.com/7.x/avataaars/svg?seed=Noa&backgroundColor=ffdfbf',
-                'Erik': 'https://api.dicebear.com/7.x/avataaars/svg?seed=Erik&backgroundColor=b6e3f4',
-                'Fer': 'https://api.dicebear.com/7.x/avataaars/svg?seed=Fer&backgroundColor=d1d5db'
-            };
-            document.getElementById('user-name').innerText = currentUser;
-            document.getElementById('user-avatar').src = avatarMap[currentUser];
+        function registerGuest() {
+            const name = document.getElementById('guest-name').value.trim();
+            if(name.length > 2) selectProfile(name);
+            else alert("Nombre demasiado corto");
+        }
 
-            // Escuchar cambios en tiempo real desde Firebase
-            db.ref('users/' + currentUser).on('value', (snap) => {
-                const data = snap.val() || { points: 0, captures: 0, blocks: {} };
+        function setupApp() {
+            document.getElementById('user-name').innerText = currentUser;
+            document.getElementById('user-avatar').src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${currentUser}`;
+            
+            // Puntos y Bloques en Tiempo Real
+            db.ref('users/' + currentUser).on('value', snap => {
+                const data = snap.val() || { points: 0, blocks: {} };
                 document.getElementById('user-points').innerText = data.points || 0;
-                document.getElementById('user-captures').innerText = data.captures || 0;
-                
-                // Actualizar visual de bloques
                 for(let i=0; i<=9; i++) {
                     const el = document.getElementById(`block-${i}`);
                     if(data.blocks && data.blocks[i]) {
-                        el.classList.add('border-yellow-500', 'text-yellow-500', 'bg-yellow-500/10');
+                        el.classList.add('border-yellow-500', 'text-yellow-500', 'bg-yellow-500/20');
                     } else {
-                        el.classList.remove('border-yellow-500', 'text-yellow-500', 'bg-yellow-500/10');
+                        el.classList.remove('border-yellow-500', 'text-yellow-500', 'bg-yellow-500/20');
                     }
                 }
             });
+
+            // Ranking y Global
+            db.ref('users').on('value', snap => {
+                const users = snap.val() || {};
+                const sorted = Object.entries(users).sort((a,b) => (b[1].points || 0) - (a[1].points || 0));
+                let html = '';
+                let total = 0;
+                sorted.forEach(([name, data], idx) => {
+                    total += (data.captures || 0);
+                    html += `<div class="glass-card p-4 rounded-2xl flex justify-between items-center ${name === currentUser ? 'border-yellow-500 bg-yellow-500/5' : ''}">
+                        <div class="flex items-center gap-3">
+                            <span class="text-slate-500 font-black">#${idx+1}</span>
+                            <span class="font-bold uppercase">${name}</span>
+                        </div>
+                        <span class="font-black text-yellow-500">${data.points || 0} pts</span>
+                    </div>`;
+                });
+                document.getElementById('ranking-list').innerHTML = html;
+                document.getElementById('total-global').innerText = total;
+            });
         }
 
-        function addNum(n) {
-            if(currentPlate.length < 4) {
-                currentPlate += n;
-                updateDisplay();
-            }
-        }
-
-        function clearLast() {
-            currentPlate = currentPlate.slice(0, -1);
-            updateDisplay();
-        }
-
-        function updateDisplay() {
-            document.getElementById('display').innerText = currentPlate.padEnd(4, '_');
-        }
+        function addNum(n) { if(currentPlate.length < 4) { currentPlate += n; updateDisp(); } }
+        function clearLast() { currentPlate = currentPlate.slice(0, -1); updateDisp(); }
+        function updateDisp() { document.getElementById('display').innerText = currentPlate.padEnd(4, '_'); }
 
         function submitPlate() {
             if(currentPlate.length === 4) {
-                const firstDigit = currentPlate[0];
-                const userRef = db.ref('users/' + currentUser);
-                
-                userRef.once('value').then(snap => {
-                    let data = snap.val() || { points: 0, captures: 0, blocks: {} };
-                    data.points += 5;
-                    data.captures += 1;
-                    if(!data.blocks) data.blocks = {};
-                    data.blocks[firstDigit] = true;
-                    
-                    userRef.set(data);
-                    alert("¡Matrícula guardada! +5 puntos");
-                    currentPlate = "";
-                    updateDisplay();
+                const first = currentPlate[0];
+                const ref = db.ref('users/' + currentUser);
+                ref.once('value').then(snap => {
+                    let d = snap.val() || { points: 0, captures: 0, blocks: {} };
+                    d.points = (d.points || 0) + 5;
+                    d.captures = (d.captures || 0) + 1;
+                    if(!d.blocks) d.blocks = {};
+                    d.blocks[first] = true;
+                    ref.set(d);
+                    currentPlate = ""; updateDisp();
+                    document.getElementById('status-msg').innerText = "¡REGISTRADA +5!";
+                    setTimeout(() => document.getElementById('status-msg').innerText = "Introduce 4 números", 2000);
                 });
             }
         }
 
-        function logout() {
-            localStorage.removeItem('collector_user');
-            location.reload();
+        function showSection(s) {
+            closeModals();
+            document.getElementById('modal-' + s).classList.add('active');
         }
+        function closeModals() { document.querySelectorAll('.modal').forEach(m => m.classList.remove('active')); }
+        function logout() { localStorage.removeItem('collector_user'); location.reload(); }
 
-        // Carga Inicial
         window.onload = () => {
-            setTimeout(() => {
-                document.getElementById('splash-screen').style.opacity = '0';
-                setTimeout(() => document.getElementById('splash-screen').classList.add('hidden'), 500);
-            }, 2000);
-
             const saved = localStorage.getItem('collector_user');
-            if(saved) {
-                currentUser = saved;
-                document.getElementById('profile-selection').classList.add('hidden');
-                setupApp();
-            }
+            if(saved) selectProfile(saved);
         };
     </script>
 </body>
