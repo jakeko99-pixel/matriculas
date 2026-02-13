@@ -1,64 +1,4 @@
-<!doctype html>
-<html lang="es" class="h-full">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>PLATECOLLECTOR PRO</title>
-  
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Matrículas">
-  <link rel="apple-touch-icon" href="icono.png">
-  <link rel="icon" type="image/png" href="icono.png">
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=Space+Mono:wght@700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  
-  <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
-
-  <style>
-    :root { --accent: #eab308; --bg: #020617; }
-    body { 
-      font-family: 'Plus Jakarta Sans', sans-serif; 
-      background-color: var(--bg); 
-      color: white; 
-      -webkit-tap-highlight-color: transparent;
-      overflow: hidden;
-    }
-    .font-mono { font-family: 'Space Mono', monospace; }
-    
-    #splash-screen {
-      position: fixed; inset: 0; background: #020617;
-      display: flex; flex-direction: column; justify-content: center; align-items: center;
-      z-index: 9999; transition: opacity 0.6s ease-out;
-    }
-
-    .glass-card { background: rgba(30, 41, 59, 0.75); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.1); }
-    .neo-btn { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
-    .neo-btn:active { transform: scale(0.92); }
-    
-    .progress-bar-bg { background: rgba(255,255,255,0.1); border-radius: 99px; overflow: hidden; }
-    .progress-fill { transition: width 1s ease-in-out; height: 100%; border-radius: 99px; }
-    
-    .no-scrollbar::-webkit-scrollbar { display: none; }
-    @keyframes slideUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-    .animate-up { animation: slideUp 0.4s ease-out forwards; }
-    
-    #global-modal, #profile-modal { z-index: 1000; }
-    #toast { z-index: 2000; }
-  </style>
-</head>
-<body class="h-full select-none">
-
-  <div id="splash-screen">
-    <div class="animate-up flex flex-col items-center">
-      <img src="icono.png" alt="Logo" class="w-48 h-48 rounded-[2.5rem] shadow-[0_0_50px_rgba(234,179,8,0.3)] mb-6">
-      <h2 class="text-yellow-500 font-black italic tracking-[0.3em] text-sm uppercase">Cargando Desafío...</h2>
-    </div>
-  </div>
-
-  <div id="login-screen" class="fixed inset-0 flex flex-col items-center justify-start p-6 bg-slate-950 overflow-y-auto z-[500]">
+<div id="login-screen" class="fixed inset-0 flex flex-col items-center justify-start p-6 bg-slate-950 overflow-y-auto z-[500]">
     <div class="w-full max-w-md pt-12 space-y-10 animate-up">
       <div class="text-center">
         <h1 class="text-4xl font-extrabold tracking-tight italic text-yellow-500">PLATE<span class="text-white">COLLECTOR</span></h1>
@@ -67,208 +7,96 @@
 
       <div class="glass-card rounded-[3rem] p-8 space-y-6 shadow-2xl border-white/5">
         <p class="text-center text-xs font-black text-slate-400 uppercase tracking-widest">Selecciona tu perfil</p>
-        <div class="grid grid-cols-1 gap-4">
-          <button onclick="handleLoginRequest('NOA')" class="neo-btn bg-blue-600/10 p-5 rounded-3xl flex items-center justify-between border border-blue-500/20">
-            <div class="flex items-center gap-4">
-              <div id="home-avatar-NOA" class="w-14 h-14 rounded-full bg-blue-600 flex items-center justify-center text-2xl shadow-lg overflow-hidden border-2 border-white/10">🚙</div>
-              <span class="text-2xl font-black italic">NOA</span>
-            </div>
-            <i class="fas fa-chevron-right text-slate-700"></i>
-          </button>
-          <button onclick="handleLoginRequest('ERIK')" class="neo-btn bg-purple-600/10 p-5 rounded-3xl flex items-center justify-between border border-purple-500/20">
-            <div class="flex items-center gap-4">
-              <div id="home-avatar-ERIK" class="w-14 h-14 rounded-full bg-purple-600 flex items-center justify-center text-2xl shadow-lg overflow-hidden border-2 border-white/10">🏎️</div>
-              <span class="text-2xl font-black italic">ERIK</span>
-            </div>
-            <i class="fas fa-chevron-right text-slate-700"></i>
-          </button>
-          <button onclick="handleLoginRequest('FER')" class="neo-btn bg-red-600/10 p-5 rounded-3xl flex items-center justify-between border border-red-500/20">
-            <div class="flex items-center gap-4">
-              <div id="home-avatar-FER" class="w-14 h-14 rounded-full bg-red-600 flex items-center justify-center text-2xl shadow-lg overflow-hidden border-2 border-white/10">🚗</div>
-              <span class="text-2xl font-black italic">FER</span>
-            </div>
-            <i class="fas fa-chevron-right text-slate-700"></i>
-          </button>
-        </div>
+        
+        <div id="profiles-container" class="grid grid-cols-1 gap-4">
+          </div>
+
+        <button onclick="openAddPlayerModal()" class="w-full py-4 border-2 border-dashed border-slate-700 rounded-3xl text-slate-500 font-bold hover:border-yellow-500/50 hover:text-yellow-500 transition-all flex items-center justify-center gap-2">
+          <i class="fas fa-plus-circle"></i> NUEVO JUGADOR
+        </button>
       </div>
     </div>
   </div>
 
-  <div id="app" class="h-full flex flex-col hidden bg-[#020617]">
-    <header class="p-6 pt-12 flex items-center justify-between flex-shrink-0">
-      <button onclick="location.reload()" class="w-12 h-12 rounded-full glass-card flex items-center justify-center text-slate-400 text-xl"><i class="fas fa-sign-out-alt"></i></button>
-      <div class="flex items-center gap-3">
-        <div class="flex flex-col items-end">
-          <span id="my-name" class="font-black text-lg italic leading-none"></span>
-          <span id="my-rank-label" class="text-[9px] font-black text-yellow-500 uppercase tracking-tighter"></span>
-        </div>
-        <div id="my-avatar" class="w-12 h-12 rounded-full flex items-center justify-center bg-yellow-500 text-black text-2xl overflow-hidden shadow-2xl border-2 border-white/10"></div>
+  <div id="add-player-modal" class="fixed inset-0 bg-black/90 backdrop-blur-md z-[600] hidden flex items-center justify-center p-6">
+    <div class="glass-card w-full max-w-sm rounded-[3rem] p-8 space-y-6 border-yellow-500/20">
+      <h3 class="text-2xl font-black italic text-center">NUEVO RIVAL</h3>
+      <div class="space-y-4">
+        <input id="new-player-name" type="text" placeholder="NOMBRE" class="w-full bg-slate-900 border border-white/10 rounded-2xl p-4 text-center font-black uppercase tracking-widest focus:border-yellow-500 outline-none">
+        <input id="new-player-emoji" type="text" placeholder="EMOJI (ej: 🏎️)" class="w-full bg-slate-900 border border-white/10 rounded-2xl p-4 text-center text-2xl focus:border-yellow-500 outline-none">
       </div>
-    </header>
-
-    <main class="flex-grow px-6 overflow-hidden relative">
-      <div id="view-input" class="view-section h-full flex flex-col items-center justify-center pb-24">
-        <div class="bg-white text-black w-full max-w-[280px] h-24 rounded-[2.5rem] flex items-center justify-center mb-8 shadow-[0_20px_60px_rgba(0,0,0,0.6)] border-[6px] border-slate-300 flex-shrink-0">
-          <span id="input-display" class="font-mono text-6xl font-black tracking-[0.1em]">____</span>
-        </div>
-        
-        <div class="grid grid-cols-3 gap-3 w-full max-w-[320px]">
-          <script>
-            [1,2,3,4,5,6,7,8,9].forEach(n => document.write(`<button onclick="pressNum('${n}')" class="h-14 rounded-2xl glass-card text-2xl font-black neo-btn bg-slate-900/60">${n}</button>`));
-          </script>
-          <button onclick="resetInput()" class="h-14 rounded-2xl bg-red-600/20 text-red-500 border border-red-500/20 neo-btn text-xl"><i class="fas fa-backspace"></i></button>
-          <button onclick="pressNum('0')" class="h-14 rounded-2xl glass-card text-2xl font-black neo-btn bg-slate-900/60">0</button>
-          <button onclick="submitPlate()" class="h-14 rounded-2xl bg-yellow-500 text-black text-2xl shadow-2xl neo-btn"><i class="fas fa-check"></i></button>
-        </div>
+      <div class="flex gap-3">
+        <button onclick="closeAddPlayerModal()" class="flex-1 py-4 rounded-2xl font-bold bg-slate-800">CANCELAR</button>
+        <button onclick="saveNewPlayer()" class="flex-1 py-4 rounded-2xl font-bold bg-yellow-500 text-black">CREAR</button>
       </div>
-      
-      <div id="view-list" class="view-section h-full hidden overflow-y-auto no-scrollbar space-y-4 pb-32"></div>
-      <div id="view-ranking" class="view-section h-full hidden overflow-y-auto no-scrollbar space-y-4 pb-32"></div>
-      <div id="view-missing" class="view-section h-full hidden overflow-y-auto no-scrollbar pb-32">
-        <div class="flex gap-2 overflow-x-auto no-scrollbar mb-4" id="block-tabs">
-            <script>
-                for(let i=0; i<=9; i++) document.write(`<button onclick="filterBlock(${i})" id="block-btn-${i}" class="min-w-[50px] h-[50px] rounded-xl glass-card flex items-center justify-center font-mono font-black text-slate-500 block-filter transition-all">${i}</button>`);
-            </script>
-        </div>
-        <div id="missing-grid" class="grid grid-cols-4 gap-2"></div>
-      </div>
-    </main>
-
-    <footer class="fixed bottom-6 left-6 right-6 z-[200]">
-      <div class="glass-card rounded-[3rem] h-20 flex items-center justify-around border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
-        <button onclick="switchView('input')" class="nav-btn w-16 h-16 flex items-center justify-center text-yellow-500" id="nav-input"><i class="fas fa-plus-circle text-4xl"></i></button>
-        <button onclick="switchView('list')" class="nav-btn w-16 h-16 flex items-center justify-center text-slate-500" id="nav-list"><i class="fas fa-list-ul text-2xl"></i></button>
-        <button onclick="switchView('ranking')" class="nav-btn w-16 h-16 flex items-center justify-center text-slate-500" id="nav-ranking"><i class="fas fa-trophy text-2xl"></i></button>
-        <button onclick="switchView('missing')" class="nav-btn w-16 h-16 flex items-center justify-center text-slate-500" id="nav-missing"><i class="fas fa-search text-2xl"></i></button>
-      </div>
-    </footer>
-
-    <div id="toast" class="fixed top-14 left-6 right-6 py-5 rounded-[2rem] font-black text-center shadow-2xl hidden animate-up"></div>
+    </div>
   </div>
 
-  <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyBXC7118AZ_gPRVES21X1vmbVQTj2f2064",
-      authDomain: "el-coleccionista-de-matriculas.firebaseapp.com",
-      databaseURL: "https://el-coleccionista-de-matriculas-default-rtdb.europe-west1.firebasedatabase.app",
-      projectId: "el-coleccionista-de-matriculas",
-      storageBucket: "el-coleccionista-de-matriculas.firebasestorage.app",
-      messagingSenderId: "812678497398",
-      appId: "1:812678497398:web:c94746b6431db5bc0b57"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
+<script>
+    // --- NUEVA LÓGICA DE JUGADORES ---
 
-    let currentUser = null;
-    let currentAvatar = "🚀";
-    let allPlatesData = [];
-    let inputBuffer = "";
-    let currentFilterBlock = null;
+    // Lista inicial si la base de datos está vacía
+    let defaultPlayers = [
+        { name: 'NOA', emoji: '🚙', color: 'blue' },
+        { name: 'ERIK', emoji: '🏎️', color: 'purple' },
+        { name: 'FER', emoji: '🚗', color: 'red' }
+    ];
 
-    window.onload = () => {
-      setTimeout(() => {
-        const splash = document.getElementById('splash-screen');
-        splash.style.opacity = '0';
-        setTimeout(() => splash.style.display = 'none', 600);
-      }, 2000);
-      listenToFirebase();
-    };
+    // Escuchar cambios en la lista de jugadores de Firebase
+    function listenToPlayers() {
+      db.ref('users').on('value', (snap) => {
+        const users = snap.val();
+        const container = document.getElementById('profiles-container');
+        container.innerHTML = "";
+        
+        // Si no hay usuarios en Firebase, usamos los default y los guardamos
+        const playersToRender = users ? Object.values(users) : defaultPlayers;
+        
+        playersToRender.forEach(user => {
+          const btn = document.createElement('button');
+          btn.onclick = () => handleLoginRequest(user.name, user.emoji);
+          btn.className = `neo-btn bg-slate-500/10 p-5 rounded-3xl flex items-center justify-between border border-white/5`;
+          btn.innerHTML = `
+            <div class="flex items-center gap-4">
+              <div class="w-14 h-14 rounded-full bg-slate-800 flex items-center justify-center text-2xl shadow-lg border-2 border-white/10">${user.emoji}</div>
+              <span class="text-2xl font-black italic uppercase">${user.name}</span>
+            </div>
+            <i class="fas fa-chevron-right text-slate-700"></i>
+          `;
+          container.appendChild(btn);
+        });
+      });
+    }
 
-    function handleLoginRequest(name) {
+    // Funciones del Modal
+    function openAddPlayerModal() { document.getElementById('add-player-modal').classList.remove('hidden'); }
+    function closeAddPlayerModal() { document.getElementById('add-player-modal').classList.add('hidden'); }
+
+    function saveNewPlayer() {
+      const name = document.getElementById('new-player-name').value.trim().toUpperCase();
+      const emoji = document.getElementById('new-player-emoji').value.trim() || '🚀';
+      
+      if(name.length < 2) return showToast("NOMBRE MUY CORTO", "bg-red-500");
+
+      db.ref('users/' + name).set({ name, emoji }).then(() => {
+        document.getElementById('new-player-name').value = "";
+        document.getElementById('new-player-emoji').value = "";
+        closeAddPlayerModal();
+        showToast("¡BIENVENIDO, " + name + "!", "bg-green-600");
+      });
+    }
+
+    // Ajustamos handleLoginRequest para aceptar el emoji dinámico
+    function handleLoginRequest(name, emoji) {
       currentUser = name.toUpperCase();
-      const avatars = { 'NOA': '🚙', 'ERIK': '🏎️', 'FER': '🚗' };
-      currentAvatar = avatars[currentUser];
+      currentAvatar = emoji;
       confirmLogin();
     }
 
-    function confirmLogin() {
-      document.getElementById('login-screen').classList.add('hidden');
-      document.getElementById('app').classList.remove('hidden');
-      document.getElementById('my-name').textContent = currentUser;
-      document.getElementById('my-avatar').innerHTML = currentAvatar;
-      updateStats();
-    }
-
-    function listenToFirebase() {
-      db.ref('plates').on('value', (snap) => {
-        const val = snap.val();
-        allPlatesData = val ? Object.values(val) : [];
-        if(currentUser) updateStats();
-      });
-    }
-
-    function updateStats() {
-      const mine = allPlatesData.filter(p => p.player === currentUser);
-      const pts = mine.reduce((a,b)=>a+b.points,0);
-      document.getElementById('my-rank-label').textContent = pts >= 1000 ? "LEYENDA" : pts >= 500 ? "MAESTRO" : "RECLUTA";
-    }
-
-    function pressNum(n) { if(inputBuffer.length < 4) { inputBuffer += n; document.getElementById('input-display').textContent = inputBuffer.padEnd(4, '_'); } }
-    function resetInput() { inputBuffer = ""; document.getElementById('input-display').textContent = "____"; }
-
-    function submitPlate() {
-      if(inputBuffer.length !== 4) return;
-      const plate = inputBuffer;
-      if(allPlatesData.some(p => p.player === currentUser && p.plate === plate)) {
-        showToast("⚠️ YA LA TIENES", "bg-orange-500 text-white"); return resetInput();
-      }
-      const pts = plate.split('').every(v => v === plate[0]) ? 10 : 1;
-      db.ref('plates/' + `${currentUser}_${plate}`).set({ player: currentUser, plate: plate, points: pts, timestamp: Date.now() }).then(() => {
-        showToast("✅ CAPTURADA +"+pts, "bg-green-600 text-white");
-        resetInput();
-      });
-    }
-
-    function switchView(v) {
-      document.querySelectorAll('.view-section').forEach(s => s.classList.add('hidden'));
-      document.getElementById('view-'+v).classList.remove('hidden');
-      document.querySelectorAll('.nav-btn').forEach(b => b.classList.replace('text-yellow-500', 'text-slate-500'));
-      document.getElementById('nav-'+v).classList.replace('text-slate-500', 'text-yellow-500');
-      
-      if(v === 'list') {
-        const mine = allPlatesData.filter(p => p.player === currentUser).sort((a,b)=>b.timestamp-a.timestamp);
-        document.getElementById('view-list').innerHTML = mine.map(p => `
-          <div class="glass-card p-4 rounded-3xl flex justify-between items-center border-l-4 border-yellow-500">
-            <span class="font-mono text-2xl font-black italic">${p.plate}</span>
-            <span class="bg-yellow-500/10 text-yellow-500 px-3 py-1 rounded-full text-xs font-black">+${p.points}</span>
-          </div>`).join('') || '<p class="text-center pt-20 font-black opacity-20 uppercase tracking-widest">Vacío</p>';
-      }
-      if(v === 'ranking') renderRanking();
-    }
-
-    function renderRanking() {
-      const p = {};
-      allPlatesData.forEach(x => { if(!p[x.player]) p[x.player] = 0; p[x.player] += x.points; });
-      document.getElementById('view-ranking').innerHTML = Object.entries(p).sort((a,b)=>b[1]-a[1]).map(([name, pts], i) => `
-        <div class="glass-card p-5 rounded-[2rem] flex justify-between items-center">
-          <span class="text-2xl font-black italic text-yellow-500">#${i+1} ${name}</span>
-          <span class="text-xl font-black">${pts}</span>
-        </div>`).join('');
-    }
-
-    function filterBlock(n) {
-      currentFilterBlock = n;
-      document.querySelectorAll('.block-filter').forEach(b => b.classList.remove('border-yellow-500', 'text-yellow-500', 'bg-yellow-500/10'));
-      document.getElementById(`block-btn-${n}`).classList.add('border-yellow-500', 'text-yellow-500', 'bg-yellow-500/10');
-      renderMissing();
-    }
-
-    function renderMissing() {
-        const grid = document.getElementById('missing-grid');
-        const seen = new Set(allPlatesData.map(p => p.plate));
-        let h = "";
-        for(let i=currentFilterBlock*1000; i<(currentFilterBlock*1000)+1000; i++) {
-            const s = i.toString().padStart(4, '0');
-            if(!seen.has(s)) h += `<div class="bg-slate-900 rounded-xl py-2 text-center text-[10px] font-mono text-slate-600 border border-white/5">${s}</div>`;
-        }
-        grid.innerHTML = h || '<p class="col-span-4 text-center py-10">¡Bloque completo!</p>';
-    }
-
-    function showToast(m, c) {
-      const t = document.getElementById('toast');
-      t.textContent = m; t.className = `fixed top-14 left-6 right-6 py-5 rounded-[2rem] font-black text-center shadow-2xl z-[2000] animate-up ${c}`;
-      t.classList.remove('hidden'); setTimeout(() => t.classList.add('hidden'), 3000);
-    }
-  </script>
-</body>
-</html>
+    // Actualizamos el onload para incluir la escucha de jugadores
+    const originalOnload = window.onload;
+    window.onload = () => {
+      originalOnload();
+      listenToPlayers();
+    };
+</script>
