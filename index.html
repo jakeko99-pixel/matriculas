@@ -2,236 +2,187 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>PLATECOLLECTOR PRO</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
 
     <style>
-        :root { --accent: #eab308; --bg: #020617; }
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: var(--bg); color: white; margin: 0; padding: 0; height: 100vh; overflow: hidden; }
+        body { font-family: sans-serif; background-color: #020617; color: white; margin: 0; height: 100vh; overflow: hidden; }
+        .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); }
         
-        .glass-card { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); }
+        /* Splash Screen que no bloquea */
+        #splash { 
+            position: fixed; inset: 0; background: #020617; z-index: 9999; 
+            display: flex; align-items: center; justify-content: center;
+        }
+        #splash img { width: 100%; max-width: 400px; height: auto; }
+
+        .numpad-btn { 
+            background: rgba(255,255,255,0.1); height: 60px; border-radius: 12px;
+            display: flex; align-items: center; justify-content: center; 
+            font-size: 1.5rem; font-weight: bold; cursor: pointer;
+        }
+        .numpad-btn:active { background: #eab308; color: black; }
         
-        /* Portada mejorada */
-        #splash-screen { position: fixed; inset: 0; background: #020617; z-index: 1000; cursor: pointer; }
-        #splash-screen img { width: 100%; height: 100%; object-fit: cover; }
-
-        /* Botones de perfil con respuesta táctil */
-        .profile-btn { width: 100%; padding: 1rem; border-radius: 1rem; display: flex; items-center: center; gap: 1rem; margin-bottom: 0.75rem; cursor: pointer; transition: transform 0.1s; }
-        .profile-btn:active { transform: scale(0.95); background: rgba(255,255,255,0.1); }
-
-        .scroll-x { display: flex; overflow-x: auto; gap: 10px; padding: 10px 0; -webkit-overflow-scrolling: touch; }
-        .scroll-x::-webkit-scrollbar { display: none; }
-
-        .numpad-btn { background: rgba(255,255,255,0.05); height: 60px; display: flex; items-center: center; justify-content: center; font-size: 1.5rem; font-weight: 800; border-radius: 12px; cursor: pointer; }
-        .numpad-btn:active { background: var(--accent); color: black; }
-
-        .modal { position: fixed; inset: 0; background: #020617; z-index: 500; display: none; padding: 20px; }
+        .modal { position: fixed; inset: 0; background: #020617; z-index: 100; display: none; padding: 20px; }
         .modal.active { display: block; }
+
+        .scroll-x { display: flex; overflow-x: auto; gap: 10px; padding: 10px 0; }
+        .scroll-x::-webkit-scrollbar { display: none; }
     </style>
 </head>
 <body class="flex flex-col">
 
-    <div id="splash-screen" onclick="this.style.display='none'">
-        <img src="icono.png" alt="Portada">
+    <div id="splash" onclick="this.remove()">
+        <img src="icono.png" alt="Cargando...">
     </div>
 
-    <div id="profile-selection" class="fixed inset-0 z-[800] bg-slate-950 p-6 flex flex-col items-center justify-center overflow-y-auto">
-        <h1 class="text-3xl font-black mb-8 italic">PLATE <span class="text-yellow-500">COLLECTOR</span></h1>
-        
-        <div class="w-full max-w-xs">
-            <div id="perfiles-fijos">
-                <div onclick="selectProfile('Noa')" class="profile-btn glass-card border-l-4 border-orange-400">
-                    <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Noa" class="w-10 h-10 bg-white/10 rounded-full">
-                    <span class="font-bold text-lg">NOA</span>
-                </div>
-                <div onclick="selectProfile('Erik')" class="profile-btn glass-card border-l-4 border-cyan-400">
-                    <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Erik" class="w-10 h-10 bg-white/10 rounded-full">
-                    <span class="font-bold text-lg">ERIK</span>
-                </div>
-                <div onclick="selectProfile('Fer')" class="profile-btn glass-card border-l-4 border-yellow-400">
-                    <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Fer" class="w-10 h-10 bg-white/10 rounded-full">
-                    <span class="font-bold text-lg">FER</span>
-                </div>
-            </div>
-
-            <div class="h-px bg-white/10 my-6"></div>
-
-            <div class="glass-card p-4 rounded-2xl">
-                <p class="text-[10px] font-bold text-slate-500 uppercase mb-3">¿Eres un nuevo jugador?</p>
-                <input type="text" id="guest-name" placeholder="Escribe tu nombre..." class="w-full bg-slate-900 border border-white/10 p-3 rounded-xl mb-3 text-white focus:outline-none focus:border-yellow-500">
-                <button onclick="registerGuest()" class="w-full bg-white text-black font-black p-3 rounded-xl active:scale-95 transition-transform">REGISTRARSE Y JUGAR</button>
+    <div id="profile-screen" class="fixed inset-0 z-[500] bg-slate-950 p-6 flex flex-col items-center justify-center">
+        <h1 class="text-3xl font-black mb-8 italic text-yellow-500 uppercase">¿Quién eres?</h1>
+        <div class="w-full max-w-xs space-y-4">
+            <button onclick="login('Noa')" class="w-full glass p-4 rounded-2xl flex items-center gap-4 text-xl font-bold">
+                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Noa" class="w-10 h-10 rounded-full"> NOA
+            </button>
+            <button onclick="login('Erik')" class="w-full glass p-4 rounded-2xl flex items-center gap-4 text-xl font-bold">
+                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Erik" class="w-10 h-10 rounded-full"> ERIK
+            </button>
+            <button onclick="login('Fer')" class="w-full glass p-4 rounded-2xl flex items-center gap-4 text-xl font-bold">
+                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Fer" class="w-10 h-10 rounded-full"> FER
+            </button>
+            <div class="pt-4">
+                <input type="text" id="guest-name" placeholder="Tu nombre..." class="w-full bg-slate-900 p-4 rounded-xl mb-2 text-white border border-white/10">
+                <button onclick="register()" class="w-full bg-yellow-500 text-black font-bold p-4 rounded-xl">REGISTRAR NUEVO</button>
             </div>
         </div>
     </div>
 
-    <header class="p-4 flex justify-between items-center bg-slate-900/50 pt-10">
-        <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-full border-2 border-yellow-500 p-0.5">
-                <img id="user-avatar" src="" class="w-full h-full rounded-full bg-slate-800">
-            </div>
-            <span id="user-name" class="font-black italic uppercase">---</span>
-        </div>
-        <div class="text-right">
-            <p class="text-[8px] text-slate-500 font-bold uppercase">Mis Puntos</p>
-            <span id="user-points" class="text-2xl font-black text-yellow-500">0</span>
-        </div>
+    <header class="p-4 flex justify-between items-center bg-slate-900 pt-10">
+        <span id="display-user" class="font-bold text-yellow-500">---</span>
+        <span id="display-points" class="font-black text-2xl">0</span>
     </header>
 
-    <main class="flex-1 overflow-y-auto p-4 pb-28">
-        <div class="scroll-x mb-6" id="blocks-container"></div>
-
-        <div class="glass-card rounded-[2.5rem] p-8 mb-6 text-center border-b-4 border-yellow-500/30">
-            <div id="display" class="text-6xl font-black tracking-widest text-white mb-2">____</div>
-            <p id="status-msg" class="text-[10px] text-slate-500 font-bold uppercase tracking-widest italic">Introduce 4 números</p>
-        </div>
+    <main class="flex-1 p-4 overflow-y-auto pb-24 text-center">
+        <div class="scroll-x mb-4" id="blocks"></div>
+        
+        <div class="glass p-10 rounded-[2.5rem] mb-6 text-6xl font-mono tracking-widest" id="plate-view">____</div>
 
         <div class="grid grid-cols-3 gap-3">
-            <div onclick="addNum(1)" class="numpad-btn">1</div>
-            <div onclick="addNum(2)" class="numpad-btn">2</div>
-            <div onclick="addNum(3)" class="numpad-btn">3</div>
-            <div onclick="addNum(4)" class="numpad-btn">4</div>
-            <div onclick="addNum(5)" class="numpad-btn">5</div>
-            <div onclick="addNum(6)" class="numpad-btn">6</div>
-            <div onclick="addNum(7)" class="numpad-btn">7</div>
-            <div onclick="addNum(8)" class="numpad-btn">8</div>
-            <div onclick="addNum(9)" class="numpad-btn">9</div>
-            <div onclick="clearLast()" class="numpad-btn text-red-500 bg-red-500/10"><i class="fas fa-backspace"></i></div>
-            <div onclick="addNum(0)" class="numpad-btn">0</div>
-            <div onclick="submitPlate()" class="numpad-btn bg-yellow-500 text-black"><i class="fas fa-check"></i></div>
+            <div onclick="press(1)" class="numpad-btn">1</div>
+            <div onclick="press(2)" class="numpad-btn">2</div>
+            <div onclick="press(3)" class="numpad-btn">3</div>
+            <div onclick="press(4)" class="numpad-btn">4</div>
+            <div onclick="press(5)" class="numpad-btn">5</div>
+            <div onclick="press(6)" class="numpad-btn">6</div>
+            <div onclick="press(7)" class="numpad-btn">7</div>
+            <div onclick="press(8)" class="numpad-btn">8</div>
+            <div onclick="press(9)" class="numpad-btn">9</div>
+            <div onclick="del()" class="numpad-btn text-red-500"><i class="fas fa-backspace"></i></div>
+            <div onclick="press(0)" class="numpad-btn">0</div>
+            <div onclick="send()" class="numpad-btn bg-yellow-500 text-black"><i class="fas fa-check"></i></div>
         </div>
     </main>
 
-    <nav class="fixed bottom-0 inset-x-0 h-20 bg-slate-950 border-t border-white/5 flex justify-around items-center z-[900]">
-        <button onclick="closeModals()" class="text-yellow-500 flex flex-col items-center"><i class="fas fa-plus-circle text-xl"></i><span class="text-[10px] font-bold mt-1">NUEVA</span></button>
-        <button onclick="showSection('ranking')" class="text-slate-500 flex flex-col items-center"><i class="fas fa-trophy text-xl"></i><span class="text-[10px] font-bold mt-1">RANKING</span></button>
-        <button onclick="showSection('comun')" class="text-slate-500 flex flex-col items-center"><i class="fas fa-globe-europe text-xl"></i><span class="text-[10px] font-bold mt-1">COMÚN</span></button>
-        <button onclick="logout()" class="text-slate-500 flex flex-col items-center"><i class="fas fa-sign-out-alt text-xl"></i><span class="text-[10px] font-bold mt-1">SALIR</span></button>
+    <nav class="fixed bottom-0 inset-x-0 h-20 bg-black flex justify-around items-center z-[1000]">
+        <button onclick="closeModals()" class="text-yellow-500"><i class="fas fa-plus-circle text-2xl"></i></button>
+        <button onclick="openM('ranking')" class="text-slate-500"><i class="fas fa-trophy text-2xl"></i></button>
+        <button onclick="openM('comun')" class="text-slate-500"><i class="fas fa-users text-2xl"></i></button>
+        <button onclick="logout()" class="text-slate-500"><i class="fas fa-sign-out-alt text-2xl"></i></button>
     </nav>
 
-    <div id="modal-ranking" class="modal">
+    <div id="m-ranking" class="modal">
         <div class="flex justify-between items-center mb-6 pt-10">
-            <h2 class="text-2xl font-black italic">RANKING <span class="text-yellow-500">PRO</span></h2>
-            <button onclick="closeModals()" class="w-10 h-10 bg-white/10 rounded-full text-xl">&times;</button>
+            <h2 class="text-2xl font-bold">RANKING</h2>
+            <button onclick="closeModals()" class="text-3xl">&times;</button>
         </div>
-        <div id="ranking-list" class="grid gap-3"></div>
+        <div id="rank-list" class="space-y-2"></div>
     </div>
 
-    <div id="modal-comun" class="modal">
+    <div id="m-comun" class="modal text-center">
         <div class="flex justify-between items-center mb-6 pt-10">
-            <h2 class="text-2xl font-black italic">MODO <span class="text-cyan-500">COMÚN</span></h2>
-            <button onclick="closeModals()" class="w-10 h-10 bg-white/10 rounded-full text-xl">&times;</button>
+            <h2 class="text-2xl font-bold">EQUIPO</h2>
+            <button onclick="closeModals()" class="text-3xl">&times;</button>
         </div>
-        <div class="glass-card p-10 rounded-3xl text-center">
-            <p class="text-slate-400 font-bold uppercase text-xs mb-2">Capturas Totales Equipo</p>
-            <h3 id="total-global" class="text-7xl font-black text-cyan-400">0</h3>
-        </div>
+        <p class="text-slate-400">Total capturas:</p>
+        <h3 id="total-global" class="text-7xl font-black text-cyan-500 mt-4">0</h3>
     </div>
 
     <script>
-        const firebaseConfig = { databaseURL: "https://el-coleccionista-de-matriculas-default-rtdb.europe-west1.firebasedatabase.app/" };
-        firebase.initializeApp(firebaseConfig);
+        const config = { databaseURL: "https://el-coleccionista-de-matriculas-default-rtdb.europe-west1.firebasedatabase.app/" };
+        firebase.initializeApp(config);
         const db = firebase.database();
 
-        let currentUser = null;
-        let currentPlate = "";
+        let user = null;
+        let plate = "";
 
-        // Inicializar Bloques
-        const bCont = document.getElementById('blocks-container');
+        // Generar 0-9
         for(let i=0; i<=9; i++){
-            bCont.innerHTML += `<div id="block-${i}" class="glass-card min-w-[65px] h-[65px] rounded-2xl flex items-center justify-center font-bold text-xl border-2 border-transparent transition-all">${i}</div>`;
+            document.getElementById('blocks').innerHTML += `<div id="b-${i}" class="glass min-w-[60px] h-[60px] rounded-xl flex items-center justify-center font-bold">${i}</div>`;
         }
 
-        function selectProfile(name) {
-            currentUser = name;
-            localStorage.setItem('collector_user', name);
-            document.getElementById('profile-selection').style.display = 'none';
-            setupApp();
+        function login(name) {
+            user = name;
+            localStorage.setItem('u', name);
+            document.getElementById('profile-screen').style.display = 'none';
+            init();
         }
 
-        function registerGuest() {
-            const name = document.getElementById('guest-name').value.trim();
-            if(name.length > 2) selectProfile(name);
-            else alert("Nombre demasiado corto");
+        function register() {
+            const n = document.getElementById('guest-name').value;
+            if(n) login(n);
         }
 
-        function setupApp() {
-            document.getElementById('user-name').innerText = currentUser;
-            document.getElementById('user-avatar').src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${currentUser}`;
-            
-            // Puntos y Bloques en Tiempo Real
-            db.ref('users/' + currentUser).on('value', snap => {
-                const data = snap.val() || { points: 0, blocks: {} };
-                document.getElementById('user-points').innerText = data.points || 0;
+        function init() {
+            document.getElementById('display-user').innerText = user;
+            db.ref('users/' + user).on('value', s => {
+                const d = s.val() || {points:0, blocks:{}};
+                document.getElementById('display-points').innerText = d.points;
                 for(let i=0; i<=9; i++) {
-                    const el = document.getElementById(`block-${i}`);
-                    if(data.blocks && data.blocks[i]) {
-                        el.classList.add('border-yellow-500', 'text-yellow-500', 'bg-yellow-500/20');
-                    } else {
-                        el.classList.remove('border-yellow-500', 'text-yellow-500', 'bg-yellow-500/20');
-                    }
+                    const b = document.getElementById('b-'+i);
+                    b.style.borderColor = (d.blocks && d.blocks[i]) ? '#eab308' : 'transparent';
+                    b.style.color = (d.blocks && d.blocks[i]) ? '#eab308' : 'white';
                 }
             });
-
-            // Ranking y Global
-            db.ref('users').on('value', snap => {
-                const users = snap.val() || {};
-                const sorted = Object.entries(users).sort((a,b) => (b[1].points || 0) - (a[1].points || 0));
-                let html = '';
-                let total = 0;
-                sorted.forEach(([name, data], idx) => {
-                    total += (data.captures || 0);
-                    html += `<div class="glass-card p-4 rounded-2xl flex justify-between items-center ${name === currentUser ? 'border-yellow-500 bg-yellow-500/5' : ''}">
-                        <div class="flex items-center gap-3">
-                            <span class="text-slate-500 font-black">#${idx+1}</span>
-                            <span class="font-bold uppercase">${name}</span>
-                        </div>
-                        <span class="font-black text-yellow-500">${data.points || 0} pts</span>
-                    </div>`;
+            db.ref('users').on('value', s => {
+                const all = s.val() || {};
+                const sort = Object.entries(all).sort((a,b) => b[1].points - a[1].points);
+                let h = ''; let t = 0;
+                sort.forEach(([n, d]) => {
+                    t += (d.captures || 0);
+                    h += `<div class="glass p-3 rounded-xl flex justify-between"><span>${n}</span><b>${d.points}</b></div>`;
                 });
-                document.getElementById('ranking-list').innerHTML = html;
-                document.getElementById('total-global').innerText = total;
+                document.getElementById('rank-list').innerHTML = h;
+                document.getElementById('total-global').innerText = t;
             });
         }
 
-        function addNum(n) { if(currentPlate.length < 4) { currentPlate += n; updateDisp(); } }
-        function clearLast() { currentPlate = currentPlate.slice(0, -1); updateDisp(); }
-        function updateDisp() { document.getElementById('display').innerText = currentPlate.padEnd(4, '_'); }
+        function press(n) { if(plate.length < 4) { plate += n; up(); } }
+        function del() { plate = plate.slice(0, -1); up(); }
+        function up() { document.getElementById('plate-view').innerText = plate.padEnd(4, '_'); }
 
-        function submitPlate() {
-            if(currentPlate.length === 4) {
-                const first = currentPlate[0];
-                const ref = db.ref('users/' + currentUser);
-                ref.once('value').then(snap => {
-                    let d = snap.val() || { points: 0, captures: 0, blocks: {} };
-                    d.points = (d.points || 0) + 5;
-                    d.captures = (d.captures || 0) + 1;
+        function send() {
+            if(plate.length === 4) {
+                const ref = db.ref('users/' + user);
+                ref.once('value').then(s => {
+                    let d = s.val() || {points:0, captures:0, blocks:{}};
+                    d.points += 5; d.captures += 1;
                     if(!d.blocks) d.blocks = {};
-                    d.blocks[first] = true;
+                    d.blocks[plate[0]] = true;
                     ref.set(d);
-                    currentPlate = ""; updateDisp();
-                    document.getElementById('status-msg').innerText = "¡REGISTRADA +5!";
-                    setTimeout(() => document.getElementById('status-msg').innerText = "Introduce 4 números", 2000);
+                    plate = ""; up();
                 });
             }
         }
 
-        function showSection(s) {
-            closeModals();
-            document.getElementById('modal-' + s).classList.add('active');
-        }
+        function openM(id) { closeModals(); document.getElementById('m-'+id).classList.add('active'); }
         function closeModals() { document.querySelectorAll('.modal').forEach(m => m.classList.remove('active')); }
-        function logout() { localStorage.removeItem('collector_user'); location.reload(); }
+        function logout() { localStorage.removeItem('u'); location.reload(); }
 
-        window.onload = () => {
-            const saved = localStorage.getItem('collector_user');
-            if(saved) selectProfile(saved);
-        };
+        setTimeout(() => { if(document.getElementById('splash')) document.getElementById('splash').remove(); }, 3000);
+        window.onload = () => { if(localStorage.getItem('u')) login(localStorage.getItem('u')); };
     </script>
 </body>
 </html>
