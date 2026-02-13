@@ -1,232 +1,274 @@
 <!doctype html>
-<html lang="es">
+<html lang="es" class="h-full">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>PLATECOLLECTOR PRO</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>PLATECOLLECTOR PRO</title>
+  
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Matrículas">
+  <link rel="apple-touch-icon" href="icono.png">
+  <link rel="icon" type="image/png" href="icono.png">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=Space+Mono:wght@700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
 
-    <style>
-        body { font-family: sans-serif; background-color: #020617; color: white; margin: 0; height: 100vh; overflow: hidden; }
-        .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); }
-        .numpad-btn { background: rgba(255,255,255,0.05); height: 55px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: bold; cursor: pointer; }
-        .numpad-btn:active { background: #eab308; color: black; }
-        .modal { position: fixed; inset: 0; background: #020617; z-index: 500; display: none; padding: 20px; overflow-y: auto; }
-        .modal.active { display: block; }
-        .scroll-x { display: flex; overflow-x: auto; gap: 10px; padding: 10px; -webkit-overflow-scrolling: touch; }
-        .scroll-x::-webkit-scrollbar { display: none; }
-    </style>
+  <style>
+    :root { --accent: #eab308; --bg: #020617; }
+    body { 
+      font-family: 'Plus Jakarta Sans', sans-serif; 
+      background-color: var(--bg); 
+      color: white; 
+      -webkit-tap-highlight-color: transparent;
+      overflow: hidden;
+    }
+    .font-mono { font-family: 'Space Mono', monospace; }
+    
+    #splash-screen {
+      position: fixed; inset: 0; background: #020617;
+      display: flex; flex-direction: column; justify-content: center; align-items: center;
+      z-index: 9999; transition: opacity 0.6s ease-out;
+    }
+
+    .glass-card { background: rgba(30, 41, 59, 0.75); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.1); }
+    .neo-btn { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+    .neo-btn:active { transform: scale(0.92); }
+    
+    .progress-bar-bg { background: rgba(255,255,255,0.1); border-radius: 99px; overflow: hidden; }
+    .progress-fill { transition: width 1s ease-in-out; height: 100%; border-radius: 99px; }
+    
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    @keyframes slideUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    .animate-up { animation: slideUp 0.4s ease-out forwards; }
+    
+    #global-modal, #profile-modal { z-index: 1000; }
+    #toast { z-index: 2000; }
+  </style>
 </head>
-<body class="flex flex-col">
+<body class="h-full select-none">
 
-    <div id="profile-screen" class="fixed inset-0 z-[1000] bg-slate-950 p-6 flex flex-col items-center justify-center">
-        <img src="icono.png" class="w-32 mb-6" onerror="this.style.display='none'">
-        <h1 class="text-3xl font-black mb-8 italic text-yellow-500 uppercase">PLATE COLLECTOR</h1>
-        <div class="w-full max-w-xs space-y-3">
-            <button onclick="login('Noa')" class="w-full glass p-4 rounded-2xl flex items-center gap-4 text-xl font-bold border-l-4 border-orange-500">
-                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Noa" class="w-10 h-10 rounded-full"> NOA
-            </button>
-            <button onclick="login('Erik')" class="w-full glass p-4 rounded-2xl flex items-center gap-4 text-xl font-bold border-l-4 border-cyan-500">
-                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Erik" class="w-10 h-10 rounded-full"> ERIK
-            </button>
-            <button onclick="login('Fer')" class="w-full glass p-4 rounded-2xl flex items-center gap-4 text-xl font-bold border-l-4 border-yellow-500">
-                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Fer" class="w-10 h-10 rounded-full"> FER
-            </button>
-            <div class="pt-4 border-t border-white/10 mt-4">
-                <input type="text" id="guest-name" placeholder="Nuevo Jugador..." class="w-full bg-slate-900 p-4 rounded-xl mb-2 text-white border border-white/10">
-                <button onclick="register()" class="w-full bg-white text-black font-bold p-4 rounded-xl uppercase">Registrar Nuevo</button>
-            </div>
-        </div>
+  <div id="splash-screen">
+    <div class="animate-up flex flex-col items-center">
+      <img src="icono.png" alt="Logo" class="w-48 h-48 rounded-[2.5rem] shadow-[0_0_50px_rgba(234,179,8,0.3)] mb-6">
+      <h2 class="text-yellow-500 font-black italic tracking-[0.3em] text-sm uppercase">Cargando Desafío...</h2>
     </div>
+  </div>
 
-    <header class="p-4 flex justify-between items-center bg-slate-900 pt-10 border-b border-white/10">
-        <div class="flex items-center gap-3">
-            <div id="user-avatar-main" class="w-10 h-10 rounded-full border-2 border-yellow-500 overflow-hidden"></div>
-            <div>
-                <p id="display-user" class="font-black italic uppercase text-sm">---</p>
-                <p id="display-rank" class="text-[10px] text-yellow-500 font-bold uppercase tracking-widest">RECLUTA</p>
+  <div id="login-screen" class="fixed inset-0 flex flex-col items-center justify-start p-6 bg-slate-950 overflow-y-auto z-[500]">
+    <div class="w-full max-w-md pt-12 space-y-10 animate-up">
+      <div class="text-center">
+        <h1 class="text-4xl font-extrabold tracking-tight italic text-yellow-500">PLATE<span class="text-white">COLLECTOR</span></h1>
+        <p class="text-slate-500 text-[9px] font-bold uppercase tracking-[0.4em] mt-2">The Family Challenge 2026</p>
+      </div>
+
+      <div class="glass-card rounded-[3rem] p-8 space-y-6 shadow-2xl border-white/5">
+        <p class="text-center text-xs font-black text-slate-400 uppercase tracking-widest">Selecciona tu perfil</p>
+        <div class="grid grid-cols-1 gap-4">
+          <button onclick="handleLoginRequest('NOA')" class="neo-btn bg-blue-600/10 p-5 rounded-3xl flex items-center justify-between border border-blue-500/20">
+            <div class="flex items-center gap-4">
+              <div id="home-avatar-NOA" class="w-14 h-14 rounded-full bg-blue-600 flex items-center justify-center text-2xl shadow-lg overflow-hidden border-2 border-white/10">🚙</div>
+              <span class="text-2xl font-black italic">NOA</span>
             </div>
+            <i class="fas fa-chevron-right text-slate-700"></i>
+          </button>
+          <button onclick="handleLoginRequest('ERIK')" class="neo-btn bg-purple-600/10 p-5 rounded-3xl flex items-center justify-between border border-purple-500/20">
+            <div class="flex items-center gap-4">
+              <div id="home-avatar-ERIK" class="w-14 h-14 rounded-full bg-purple-600 flex items-center justify-center text-2xl shadow-lg overflow-hidden border-2 border-white/10">🏎️</div>
+              <span class="text-2xl font-black italic">ERIK</span>
+            </div>
+            <i class="fas fa-chevron-right text-slate-700"></i>
+          </button>
+          <button onclick="handleLoginRequest('FER')" class="neo-btn bg-red-600/10 p-5 rounded-3xl flex items-center justify-between border border-red-500/20">
+            <div class="flex items-center gap-4">
+              <div id="home-avatar-FER" class="w-14 h-14 rounded-full bg-red-600 flex items-center justify-center text-2xl shadow-lg overflow-hidden border-2 border-white/10">🚗</div>
+              <span class="text-2xl font-black italic">FER</span>
+            </div>
+            <i class="fas fa-chevron-right text-slate-700"></i>
+          </button>
         </div>
-        <div class="text-right">
-            <p class="text-[10px] text-slate-400 font-bold uppercase">Puntos Totales</p>
-            <span id="display-points" class="text-2xl font-black text-yellow-500">0</span>
+      </div>
+    </div>
+  </div>
+
+  <div id="app" class="h-full flex flex-col hidden bg-[#020617]">
+    <header class="p-6 pt-12 flex items-center justify-between flex-shrink-0">
+      <button onclick="location.reload()" class="w-12 h-12 rounded-full glass-card flex items-center justify-center text-slate-400 text-xl"><i class="fas fa-sign-out-alt"></i></button>
+      <div class="flex items-center gap-3">
+        <div class="flex flex-col items-end">
+          <span id="my-name" class="font-black text-lg italic leading-none"></span>
+          <span id="my-rank-label" class="text-[9px] font-black text-yellow-500 uppercase tracking-tighter"></span>
         </div>
+        <div id="my-avatar" class="w-12 h-12 rounded-full flex items-center justify-center bg-yellow-500 text-black text-2xl overflow-hidden shadow-2xl border-2 border-white/10"></div>
+      </div>
     </header>
 
-    <main class="flex-1 p-4 overflow-y-auto pb-24 text-center">
-        <p class="text-[10px] font-bold text-slate-500 uppercase mb-2 tracking-widest">Tu Colección (Iniciador)</p>
-        <div class="scroll-x mb-6" id="blocks"></div>
+    <main class="flex-grow px-6 overflow-hidden relative">
+      <div id="view-input" class="view-section h-full flex flex-col items-center justify-center pb-24">
+        <div class="bg-white text-black w-full max-w-[280px] h-24 rounded-[2.5rem] flex items-center justify-center mb-8 shadow-[0_20px_60px_rgba(0,0,0,0.6)] border-[6px] border-slate-300 flex-shrink-0">
+          <span id="input-display" class="font-mono text-6xl font-black tracking-[0.1em]">____</span>
+        </div>
         
-        <div class="glass p-8 rounded-[2.5rem] mb-6 border-b-4 border-yellow-500/50 shadow-2xl">
-            <div id="plate-view" class="text-6xl font-black tracking-widest text-white mb-2">____</div>
-            <p id="feedback" class="text-[10px] text-slate-500 font-bold uppercase">Caza una matrícula</p>
+        <div class="grid grid-cols-3 gap-3 w-full max-w-[320px]">
+          <script>
+            [1,2,3,4,5,6,7,8,9].forEach(n => document.write(`<button onclick="pressNum('${n}')" class="h-14 rounded-2xl glass-card text-2xl font-black neo-btn bg-slate-900/60">${n}</button>`));
+          </script>
+          <button onclick="resetInput()" class="h-14 rounded-2xl bg-red-600/20 text-red-500 border border-red-500/20 neo-btn text-xl"><i class="fas fa-backspace"></i></button>
+          <button onclick="pressNum('0')" class="h-14 rounded-2xl glass-card text-2xl font-black neo-btn bg-slate-900/60">0</button>
+          <button onclick="submitPlate()" class="h-14 rounded-2xl bg-yellow-500 text-black text-2xl shadow-2xl neo-btn"><i class="fas fa-check"></i></button>
         </div>
-
-        <div class="grid grid-cols-3 gap-3">
-            <div onclick="press(1)" class="numpad-btn">1</div>
-            <div onclick="press(2)" class="numpad-btn">2</div>
-            <div onclick="press(3)" class="numpad-btn">3</div>
-            <div onclick="press(4)" class="numpad-btn">4</div>
-            <div onclick="press(5)" class="numpad-btn">5</div>
-            <div onclick="press(6)" class="numpad-btn">6</div>
-            <div onclick="press(7)" class="numpad-btn">7</div>
-            <div onclick="press(8)" class="numpad-btn">8</div>
-            <div onclick="press(9)" class="numpad-btn">9</div>
-            <div onclick="del()" class="numpad-btn text-red-500 bg-red-500/10"><i class="fas fa-backspace"></i></div>
-            <div onclick="press(0)" class="numpad-btn">0</div>
-            <div onclick="send()" class="numpad-btn bg-yellow-500 text-black shadow-lg"><i class="fas fa-check"></i></div>
+      </div>
+      
+      <div id="view-list" class="view-section h-full hidden overflow-y-auto no-scrollbar space-y-4 pb-32"></div>
+      <div id="view-ranking" class="view-section h-full hidden overflow-y-auto no-scrollbar space-y-4 pb-32"></div>
+      <div id="view-missing" class="view-section h-full hidden overflow-y-auto no-scrollbar pb-32">
+        <div class="flex gap-2 overflow-x-auto no-scrollbar mb-4" id="block-tabs">
+            <script>
+                for(let i=0; i<=9; i++) document.write(`<button onclick="filterBlock(${i})" id="block-btn-${i}" class="min-w-[50px] h-[50px] rounded-xl glass-card flex items-center justify-center font-mono font-black text-slate-500 block-filter transition-all">${i}</button>`);
+            </script>
         </div>
+        <div id="missing-grid" class="grid grid-cols-4 gap-2"></div>
+      </div>
     </main>
 
-    <nav class="fixed bottom-0 inset-x-0 h-20 bg-slate-950 flex justify-around items-center z-[900] border-t border-white/5">
-        <button onclick="closeModals()" class="text-yellow-500 flex flex-col items-center"><i class="fas fa-plus-circle text-xl"></i><span class="text-[8px] font-bold mt-1">NUEVA</span></button>
-        <button onclick="openM('ranking')" class="text-slate-500 flex flex-col items-center"><i class="fas fa-trophy text-xl"></i><span class="text-[8px] font-bold mt-1">RANKING</span></button>
-        <button onclick="openM('comun')" class="text-slate-500 flex flex-col items-center"><i class="fas fa-globe text-xl"></i><span class="text-[8px] font-bold mt-1">COMÚN</span></button>
-        <button onclick="logout()" class="text-slate-500 flex flex-col items-center"><i class="fas fa-sign-out-alt text-xl"></i><span class="text-[8px] font-bold mt-1">SALIR</span></button>
-    </nav>
+    <footer class="fixed bottom-6 left-6 right-6 z-[200]">
+      <div class="glass-card rounded-[3rem] h-20 flex items-center justify-around border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
+        <button onclick="switchView('input')" class="nav-btn w-16 h-16 flex items-center justify-center text-yellow-500" id="nav-input"><i class="fas fa-plus-circle text-4xl"></i></button>
+        <button onclick="switchView('list')" class="nav-btn w-16 h-16 flex items-center justify-center text-slate-500" id="nav-list"><i class="fas fa-list-ul text-2xl"></i></button>
+        <button onclick="switchView('ranking')" class="nav-btn w-16 h-16 flex items-center justify-center text-slate-500" id="nav-ranking"><i class="fas fa-trophy text-2xl"></i></button>
+        <button onclick="switchView('missing')" class="nav-btn w-16 h-16 flex items-center justify-center text-slate-500" id="nav-missing"><i class="fas fa-search text-2xl"></i></button>
+      </div>
+    </footer>
 
-    <div id="m-ranking" class="modal">
-        <div class="flex justify-between items-center mb-6 pt-10">
-            <h2 class="text-2xl font-black italic">RANKING <span class="text-yellow-500 text-3xl">PRO</span></h2>
-            <button onclick="closeModals()" class="w-10 h-10 bg-white/10 rounded-full text-xl">&times;</button>
-        </div>
-        <div id="rank-list" class="space-y-3"></div>
-    </div>
+    <div id="toast" class="fixed top-14 left-6 right-6 py-5 rounded-[2rem] font-black text-center shadow-2xl hidden animate-up"></div>
+  </div>
 
-    <div id="m-comun" class="modal text-center">
-        <div class="flex justify-between items-center mb-6 pt-10">
-            <h2 class="text-2xl font-black italic uppercase">Modo <span class="text-cyan-500">Equipo</span></h2>
-            <button onclick="closeModals()" class="w-10 h-10 bg-white/10 rounded-full text-xl">&times;</button>
-        </div>
-        <div class="glass p-8 rounded-3xl mb-4">
-            <p class="text-slate-400 font-bold text-xs uppercase mb-2 tracking-widest">Total Matrículas Entre Todos</p>
-            <h3 id="total-global" class="text-7xl font-black text-cyan-400">0</h3>
-        </div>
-        <div class="glass p-6 rounded-3xl text-left">
-            <h4 class="font-bold mb-4 text-yellow-500 uppercase text-xs">Números pendientes por cazar:</h4>
-            <div id="pendientes-list" class="flex flex-wrap gap-2 text-2xl font-bold"></div>
-        </div>
-    </div>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBXC7118AZ_gPRVES21X1vmbVQTj2f2064",
+      authDomain: "el-coleccionista-de-matriculas.firebaseapp.com",
+      databaseURL: "https://el-coleccionista-de-matriculas-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "el-coleccionista-de-matriculas",
+      storageBucket: "el-coleccionista-de-matriculas.firebasestorage.app",
+      messagingSenderId: "812678497398",
+      appId: "1:812678497398:web:c94746b6431db5bc0b57"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
 
-    <script>
-        const config = { databaseURL: "https://el-coleccionista-de-matriculas-default-rtdb.europe-west1.firebasedatabase.app/" };
-        firebase.initializeApp(config);
-        const db = firebase.database();
+    let currentUser = null;
+    let currentAvatar = "🚀";
+    let allPlatesData = [];
+    let inputBuffer = "";
+    let currentFilterBlock = null;
 
-        let user = null;
-        let plate = "";
+    window.onload = () => {
+      setTimeout(() => {
+        const splash = document.getElementById('splash-screen');
+        splash.style.opacity = '0';
+        setTimeout(() => splash.style.display = 'none', 600);
+      }, 2000);
+      listenToFirebase();
+    };
 
-        // Inicializar Bloques visuales
-        const bCont = document.getElementById('blocks');
-        for(let i=0; i<=9; i++){
-            bCont.innerHTML += `<div id="b-${i}" class="glass min-w-[55px] h-[55px] rounded-xl flex items-center justify-center font-black text-xl border-2 border-transparent transition-all">${i}</div>`;
+    function handleLoginRequest(name) {
+      currentUser = name.toUpperCase();
+      const avatars = { 'NOA': '🚙', 'ERIK': '🏎️', 'FER': '🚗' };
+      currentAvatar = avatars[currentUser];
+      confirmLogin();
+    }
+
+    function confirmLogin() {
+      document.getElementById('login-screen').classList.add('hidden');
+      document.getElementById('app').classList.remove('hidden');
+      document.getElementById('my-name').textContent = currentUser;
+      document.getElementById('my-avatar').innerHTML = currentAvatar;
+      updateStats();
+    }
+
+    function listenToFirebase() {
+      db.ref('plates').on('value', (snap) => {
+        const val = snap.val();
+        allPlatesData = val ? Object.values(val) : [];
+        if(currentUser) updateStats();
+      });
+    }
+
+    function updateStats() {
+      const mine = allPlatesData.filter(p => p.player === currentUser);
+      const pts = mine.reduce((a,b)=>a+b.points,0);
+      document.getElementById('my-rank-label').textContent = pts >= 1000 ? "LEYENDA" : pts >= 500 ? "MAESTRO" : "RECLUTA";
+    }
+
+    function pressNum(n) { if(inputBuffer.length < 4) { inputBuffer += n; document.getElementById('input-display').textContent = inputBuffer.padEnd(4, '_'); } }
+    function resetInput() { inputBuffer = ""; document.getElementById('input-display').textContent = "____"; }
+
+    function submitPlate() {
+      if(inputBuffer.length !== 4) return;
+      const plate = inputBuffer;
+      if(allPlatesData.some(p => p.player === currentUser && p.plate === plate)) {
+        showToast("⚠️ YA LA TIENES", "bg-orange-500 text-white"); return resetInput();
+      }
+      const pts = plate.split('').every(v => v === plate[0]) ? 10 : 1;
+      db.ref('plates/' + `${currentUser}_${plate}`).set({ player: currentUser, plate: plate, points: pts, timestamp: Date.now() }).then(() => {
+        showToast("✅ CAPTURADA +"+pts, "bg-green-600 text-white");
+        resetInput();
+      });
+    }
+
+    function switchView(v) {
+      document.querySelectorAll('.view-section').forEach(s => s.classList.add('hidden'));
+      document.getElementById('view-'+v).classList.remove('hidden');
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.replace('text-yellow-500', 'text-slate-500'));
+      document.getElementById('nav-'+v).classList.replace('text-slate-500', 'text-yellow-500');
+      
+      if(v === 'list') {
+        const mine = allPlatesData.filter(p => p.player === currentUser).sort((a,b)=>b.timestamp-a.timestamp);
+        document.getElementById('view-list').innerHTML = mine.map(p => `
+          <div class="glass-card p-4 rounded-3xl flex justify-between items-center border-l-4 border-yellow-500">
+            <span class="font-mono text-2xl font-black italic">${p.plate}</span>
+            <span class="bg-yellow-500/10 text-yellow-500 px-3 py-1 rounded-full text-xs font-black">+${p.points}</span>
+          </div>`).join('') || '<p class="text-center pt-20 font-black opacity-20 uppercase tracking-widest">Vacío</p>';
+      }
+      if(v === 'ranking') renderRanking();
+    }
+
+    function renderRanking() {
+      const p = {};
+      allPlatesData.forEach(x => { if(!p[x.player]) p[x.player] = 0; p[x.player] += x.points; });
+      document.getElementById('view-ranking').innerHTML = Object.entries(p).sort((a,b)=>b[1]-a[1]).map(([name, pts], i) => `
+        <div class="glass-card p-5 rounded-[2rem] flex justify-between items-center">
+          <span class="text-2xl font-black italic text-yellow-500">#${i+1} ${name}</span>
+          <span class="text-xl font-black">${pts}</span>
+        </div>`).join('');
+    }
+
+    function filterBlock(n) {
+      currentFilterBlock = n;
+      document.querySelectorAll('.block-filter').forEach(b => b.classList.remove('border-yellow-500', 'text-yellow-500', 'bg-yellow-500/10'));
+      document.getElementById(`block-btn-${n}`).classList.add('border-yellow-500', 'text-yellow-500', 'bg-yellow-500/10');
+      renderMissing();
+    }
+
+    function renderMissing() {
+        const grid = document.getElementById('missing-grid');
+        const seen = new Set(allPlatesData.map(p => p.plate));
+        let h = "";
+        for(let i=currentFilterBlock*1000; i<(currentFilterBlock*1000)+1000; i++) {
+            const s = i.toString().padStart(4, '0');
+            if(!seen.has(s)) h += `<div class="bg-slate-900 rounded-xl py-2 text-center text-[10px] font-mono text-slate-600 border border-white/5">${s}</div>`;
         }
+        grid.innerHTML = h || '<p class="col-span-4 text-center py-10">¡Bloque completo!</p>';
+    }
 
-        function login(name) {
-            user = name;
-            localStorage.setItem('collector_user_v2', name);
-            document.getElementById('profile-screen').style.display = 'none';
-            init();
-        }
-
-        function register() {
-            const n = document.getElementById('guest-name').value.trim();
-            if(n.length > 2) login(n);
-        }
-
-        function getRank(pts) {
-            if(pts >= 500) return "LEGENDARY HUNTER";
-            if(pts >= 200) return "ELITE COLLECTOR";
-            if(pts >= 50) return "EXPERTO";
-            return "RECLUTA";
-        }
-
-        function init() {
-            document.getElementById('display-user').innerText = user;
-            document.getElementById('user-avatar-main').innerHTML = `<img src="https://api.dicebear.com/7.x/avataaars/svg?seed=${user}" class="w-full">`;
-            
-            // ESCUCHAR DATOS DEL USUARIO
-            db.ref('users/' + user).on('value', s => {
-                const d = s.val() || {points:0, blocks:{}};
-                document.getElementById('display-points').innerText = d.points || 0;
-                document.getElementById('display-rank').innerText = getRank(d.points || 0);
-                
-                for(let i=0; i<=9; i++) {
-                    const b = document.getElementById('b-'+i);
-                    if(d.blocks && d.blocks[i]) {
-                        b.classList.add('border-yellow-500', 'text-yellow-500', 'bg-yellow-500/10');
-                    } else {
-                        b.classList.remove('border-yellow-500', 'text-yellow-500', 'bg-yellow-500/10');
-                    }
-                }
-            });
-
-            // RANKING Y COMÚN
-            db.ref('users').on('value', s => {
-                const all = s.val() || {};
-                const sort = Object.entries(all).sort((a,b) => (b[1].points || 0) - (a[1].points || 0));
-                let h = ''; let totalCapturas = 0; let cazarGlobal = new Set([0,1,2,3,4,5,6,7,8,9]);
-
-                sort.forEach(([n, d], idx) => {
-                    totalCapturas += (d.captures || 0);
-                    if(d.blocks) Object.keys(d.blocks).forEach(num => cazarGlobal.delete(parseInt(num)));
-                    
-                    h += `<div class="glass p-4 rounded-2xl flex justify-between items-center ${n === user ? 'border-yellow-500 bg-yellow-500/5' : ''}">
-                        <div class="flex items-center gap-3">
-                            <span class="text-slate-500 font-black">#${idx+1}</span>
-                            <span class="font-bold uppercase text-sm">${n}</span>
-                        </div>
-                        <span class="font-black text-yellow-500">${d.points || 0}</span>
-                    </div>`;
-                });
-                document.getElementById('rank-list').innerHTML = h;
-                document.getElementById('total-global').innerText = totalCapturas;
-                
-                // Pendientes Globales
-                let pList = '';
-                cazarGlobal.forEach(n => pList += `<span class="w-10 h-10 bg-white/5 rounded-lg flex items-center justify-center text-slate-500">${n}</span>`);
-                document.getElementById('pendientes-list').innerHTML = pList || '<span class="text-green-500 text-sm italic">¡Todos los números cazados!</span>';
-            });
-        }
-
-        function press(n) { if(plate.length < 4) { plate += n; up(); } }
-        function del() { plate = plate.slice(0, -1); up(); }
-        function up() { document.getElementById('plate-view').innerText = plate.padEnd(4, '_'); }
-
-        function send() {
-            if(plate.length === 4) {
-                const first = plate[0];
-                const ref = db.ref('users/' + user);
-                ref.once('value').then(s => {
-                    let d = s.val() || {points:0, captures:0, blocks:{}};
-                    d.points = (parseInt(d.points) || 0) + 5;
-                    d.captures = (parseInt(d.captures) || 0) + 1;
-                    if(!d.blocks) d.blocks = {};
-                    d.blocks[first] = true;
-                    ref.set(d);
-                    
-                    document.getElementById('feedback').innerText = "¡REGISTRADA! +5 PTS";
-                    document.getElementById('feedback').classList.add('text-yellow-500');
-                    plate = ""; up();
-                    setTimeout(() => {
-                        document.getElementById('feedback').innerText = "Caza una matrícula";
-                        document.getElementById('feedback').classList.remove('text-yellow-500');
-                    }, 2000);
-                });
-            }
-        }
-
-        function openM(id) { closeModals(); document.getElementById('m-'+id).classList.add('active'); }
-        function closeModals() { document.querySelectorAll('.modal').forEach(m => m.classList.remove('active')); }
-        function logout() { localStorage.removeItem('collector_user_v2'); location.reload(); }
-
-        window.onload = () => {
-            const saved = localStorage.getItem('collector_user_v2');
-            if(saved) login(saved);
-        };
-    </script>
+    function showToast(m, c) {
+      const t = document.getElementById('toast');
+      t.textContent = m; t.className = `fixed top-14 left-6 right-6 py-5 rounded-[2rem] font-black text-center shadow-2xl z-[2000] animate-up ${c}`;
+      t.classList.remove('hidden'); setTimeout(() => t.classList.add('hidden'), 3000);
+    }
+  </script>
 </body>
 </html>
