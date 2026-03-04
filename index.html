@@ -69,7 +69,7 @@
 
     <div id="stats-modal" class="hidden fixed inset-0 bg-slate-950 z-[600] flex flex-col">
         <div class="p-6 bg-slate-900 border-b border-slate-800 flex justify-between items-center">
-            <h2 class="text-xl font-black text-yellow-400">Estadísticas</h2>
+            <h2 class="text-xl font-black text-yellow-400">Tu Álbum y Ranking</h2>
             <button onclick="closeStats()" class="bg-slate-800 text-white px-4 py-2 rounded-lg font-bold">Cerrar</button>
         </div>
         <div class="flex-1 overflow-y-auto p-6 space-y-6" id="stats-content">
@@ -78,7 +78,7 @@
 
     <div id="universe-modal" class="hidden fixed inset-0 bg-slate-950 z-[650] flex flex-col">
         <div class="p-6 bg-slate-900 border-b border-slate-800 flex justify-between items-center">
-            <h2 class="text-xl font-black text-white">Bloques de Matrículas</h2>
+            <h2 id="universe-title" class="text-xl font-black text-white">Bloques de Matrículas</h2>
             <button onclick="closeUniverse()" class="bg-slate-800 text-white px-4 py-2 rounded-lg font-bold">Volver</button>
         </div>
         <div class="flex-1 overflow-y-auto p-6 grid grid-cols-1 gap-4 content-start" id="universe-content">
@@ -126,11 +126,10 @@
             <span id="toast-subtext" class="text-xl text-white/90"></span>
         </div>
 
-        <main class="flex-1 flex flex-col items-center justify-center p-6 relative w-full overflow-y-auto">
+        <main class="flex-1 flex flex-col items-center justify-start pt-16 sm:pt-24 p-6 relative w-full overflow-y-auto">
             <div class="w-full max-w-[320px] sm:max-w-sm space-y-6 mx-auto">
                 <div class="text-center">
                     <p class="text-yellow-500 text-[10px] font-black tracking-[0.3em] uppercase mb-2">Nueva Matrícula</p>
-                    
                     <div class="relative flex items-stretch shadow-[0_0_30px_rgba(250,204,21,0.15)] rounded-2xl bg-white focus-within:ring-4 focus-within:ring-yellow-400/50 transition-all overflow-hidden w-full">
                         <div class="bg-blue-700 w-10 shrink-0 flex flex-col items-center justify-center p-1">
                             <span class="text-[12px] font-black text-white">E</span>
@@ -152,11 +151,11 @@
             <div id="recent-list" class="flex-1 overflow-y-auto p-4 space-y-2 bg-slate-900"></div>
         </div>
 
-        <footer class="bg-slate-950 p-4 border-t border-slate-800 grid grid-cols-2 gap-3 z-30 shrink-0">
-            <button onclick="toggleRecent()" class="bg-slate-900 border border-slate-700 py-3 rounded-xl font-bold text-sm text-slate-300 flex items-center justify-center gap-2 active:bg-slate-800">
+        <footer class="bg-slate-950 p-4 pb-10 border-t border-slate-800 grid grid-cols-2 gap-4 z-30 shrink-0">
+            <button onclick="toggleRecent()" class="bg-slate-900 border border-slate-700 py-5 rounded-2xl font-black text-base text-slate-300 flex items-center justify-center gap-2 active:bg-slate-800 shadow-lg">
                 <span>⏱️</span> Últimas Cazadas
             </button>
-            <button onclick="openStats()" class="bg-slate-900 border border-slate-700 py-3 rounded-xl font-bold text-sm text-slate-300 flex items-center justify-center gap-2 active:bg-slate-800">
+            <button onclick="openStats()" class="bg-slate-900 border border-slate-700 py-5 rounded-2xl font-black text-base text-slate-300 flex items-center justify-center gap-2 active:bg-slate-800 shadow-lg">
                 <span>📊</span> Álbum y Ranking
             </button>
         </footer>
@@ -172,6 +171,8 @@
         let globalDataCache = {};
         window.currentModalData = { NOA: {}, ERIK: {}, FER: {}, GLOBAL: [] };
         
+        let currentUniverseScope = 'GLOBAL'; // Nueva variable para saber si estamos viendo el álbum global o individual
+
         const defaultAvatars = {
             'NOA': 'https://github.com/jakeko99-pixel/matriculas/blob/main/Noa%20Lodres%20Juego.jpeg?raw=true',
             'ERIK': 'https://github.com/jakeko99-pixel/matriculas/blob/main/Erik%20Juego.png?raw=true',
@@ -217,13 +218,18 @@
         function openStats() { document.getElementById('stats-modal').classList.remove('hidden'); renderStats(); }
         function closeStats() { document.getElementById('stats-modal').classList.add('hidden'); }
 
-        function openUniverse() {
-            const globalPlates = window.currentModalData.GLOBAL || [];
+        // --- LÓGICA DE BLOQUES MODIFICADA PARA PERMITIR INDIVIDUAL O GLOBAL ---
+        function openUniverse(scope) {
+            currentUniverseScope = scope || 'GLOBAL';
+            const plates = currentUniverseScope === 'GLOBAL' ? window.currentModalData.GLOBAL : (window.currentModalData[currentUniverseScope]?.aportadas || []);
+            
+            document.getElementById('universe-title').innerText = currentUniverseScope === 'GLOBAL' ? "Misión Familiar" : `Álbum de ${currentUniverseScope}`;
+
             let content = '';
             
             for(let i=0; i<10; i++) {
                 let prefix = i.toString();
-                let count = globalPlates.filter(p => p.startsWith(prefix)).length;
+                let count = plates.filter(p => p.startsWith(prefix)).length;
                 let pct = (count / 1000) * 100;
                 
                 content += `
@@ -271,10 +277,11 @@
         }
 
         function renderThousandContent() {
-            const globalPlates = window.currentModalData.GLOBAL || [];
+            // Usa las matrículas globales O las individuales, según lo que hayamos tocado
+            const plates = currentUniverseScope === 'GLOBAL' ? window.currentModalData.GLOBAL : (window.currentModalData[currentUniverseScope]?.aportadas || []);
             const prefix = currentThousandDigit.toString();
             
-            let collected = globalPlates.filter(p => p.startsWith(prefix)).sort((a,b) => parseInt(a)-parseInt(b));
+            let collected = plates.filter(p => p.startsWith(prefix)).sort((a,b) => parseInt(a)-parseInt(b));
             
             document.getElementById('count-collected').innerText = collected.length;
             document.getElementById('count-missing').innerText = 1000 - collected.length;
@@ -340,6 +347,7 @@
         }
         function closeDetails() { document.getElementById('details-modal').classList.add('hidden'); }
 
+        // --- RENDERIZADO PRINCIPAL DE ESTADÍSTICAS (AÑADIDO ÁLBUM INDIVIDUAL) ---
         function renderStats() {
             const content = document.getElementById('stats-content');
             if(!globalDataCache.users) { content.innerHTML = '<p>Cargando datos...</p>'; return; }
@@ -353,21 +361,39 @@
                 else allUniquePlates.add(key);
             }
             
-            let totalWorld = allUniquePlates.size;
-            let missing = 10000 - totalWorld;
-            let percentage = ((totalWorld / 10000) * 100).toFixed(2);
-            
             window.currentModalData.GLOBAL = Array.from(allUniquePlates);
 
+            // Cálculos Globales
+            let totalWorld = window.currentModalData.GLOBAL.length;
+            let missingWorld = 10000 - totalWorld;
+            let pctWorld = ((totalWorld / 10000) * 100).toFixed(2);
+
+            // Cálculos Individuales (del jugador actual)
+            let myPlatesCount = window.currentModalData[currentPlayer]?.aportadas?.length || 0;
+            let myMissing = 10000 - myPlatesCount;
+            let myPct = ((myPlatesCount / 10000) * 100).toFixed(2);
+
             let html = `
-                <div onclick="openUniverse()" class="bg-slate-950 p-5 rounded-2xl border border-slate-800 text-center shadow-lg cursor-pointer active:scale-95 transition-transform">
-                    <h3 class="text-slate-400 text-xs font-black tracking-widest uppercase mb-2">Misión Familiar (Toca para explorar)</h3>
-                    <div class="text-4xl font-black text-yellow-400 mb-2">${totalWorld} <span class="text-lg text-slate-500">/ 10000</span></div>
-                    <div class="h-2 bg-slate-900 rounded-full w-full overflow-hidden mb-2">
-                        <div class="h-full bg-yellow-400" style="width: ${percentage}%"></div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div onclick="openUniverse('${currentPlayer}')" class="bg-slate-800 p-5 rounded-2xl border border-yellow-500/50 text-center shadow-lg cursor-pointer active:scale-95 transition-transform">
+                        <h3 class="text-yellow-400 text-xs font-black tracking-widest uppercase mb-2">Mi Álbum Personal</h3>
+                        <div class="text-3xl font-black text-white mb-2">${myPlatesCount} <span class="text-base text-slate-400">/ 10000</span></div>
+                        <div class="h-2 bg-slate-900 rounded-full w-full overflow-hidden mb-2">
+                            <div class="h-full bg-yellow-400" style="width: ${myPct}%"></div>
+                        </div>
+                        <p class="text-[10px] text-slate-400">Te faltan <span class="text-white font-bold">${myMissing}</span></p>
                     </div>
-                    <p class="text-xs text-slate-400">¡Nos faltan <span class="text-white font-bold">${missing}</span> matrículas!</p>
+
+                    <div onclick="openUniverse('GLOBAL')" class="bg-slate-900 p-5 rounded-2xl border border-slate-700 text-center shadow-lg cursor-pointer active:scale-95 transition-transform">
+                        <h3 class="text-slate-400 text-xs font-black tracking-widest uppercase mb-2">Misión Familiar</h3>
+                        <div class="text-3xl font-black text-slate-300 mb-2">${totalWorld} <span class="text-base text-slate-600">/ 10000</span></div>
+                        <div class="h-2 bg-slate-950 rounded-full w-full overflow-hidden mb-2">
+                            <div class="h-full bg-slate-500" style="width: ${pctWorld}%"></div>
+                        </div>
+                        <p class="text-[10px] text-slate-500">Nos faltan <span class="text-slate-300 font-bold">${missingWorld}</span></p>
+                    </div>
                 </div>
+
                 <h3 class="text-white font-black text-xl mt-6 mb-2 flex items-center gap-2">🏆 Ranking Detallado</h3>
             `;
 
@@ -475,13 +501,14 @@
             content.innerHTML = html;
         }
 
+        // --- INICIALIZACIÓN Y CAZA ---
         function selectPlayer(name) {
             currentPlayer = name;
             document.getElementById('login-screen').classList.add('hidden');
             document.getElementById('main-app').classList.remove('hidden');
             document.getElementById('current-name').innerText = name;
             document.getElementById('current-avatar').src = defaultAvatars[name];
-            setTimeout(() => document.getElementById('plate-input').focus(), 300);
+            // ELIMINADO: setTimeout(() => document.getElementById('plate-input').focus(), 300); -> Adiós al auto-teclado
         }
 
         db.ref().on('value', (snap) => {
