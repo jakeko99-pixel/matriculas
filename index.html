@@ -21,7 +21,7 @@
         .toast-active { animation: fadeUpOut 2s forwards; display: flex !important; }
     </style>
 </head>
-<body class="flex flex-col h-screen w-screen overflow-hidden">
+<body class="flex flex-col h-[100dvh] w-full overflow-hidden">
 
     <div id="splash" onclick="closeSplash()" class="fixed inset-0 z-[1000] bg-slate-950 transition-opacity duration-500 cursor-pointer overflow-hidden p-6 flex flex-col">
         <img src="https://raw.githubusercontent.com/jakeko99-pixel/matriculas/main/icono.png" class="absolute inset-0 w-full h-full object-contain -translate-y-16 animate-pulse drop-shadow-[0_0_25px_rgba(250,204,21,0.3)]">
@@ -109,13 +109,13 @@
             </div>
     </div>
 
-    <div id="main-app" class="hidden flex-1 flex flex-col relative">
-        <header class="bg-slate-900 p-4 border-b border-slate-800 flex justify-between items-center shadow-md">
+    <div id="main-app" class="hidden flex-1 flex flex-col relative w-full h-full overflow-hidden">
+        <header class="bg-slate-900 p-4 border-b border-slate-800 flex justify-between items-center shadow-md shrink-0">
             <div class="flex items-center gap-3">
-                <img id="current-avatar" src="" class="w-10 h-10 rounded-full border-2 border-yellow-400 object-cover">
-                <h1 id="current-name" class="font-black text-xl text-white uppercase tracking-wider"></h1>
+                <img id="current-avatar" src="" class="w-10 h-10 rounded-full border-2 border-yellow-400 object-cover shrink-0">
+                <h1 id="current-name" class="font-black text-xl text-white uppercase tracking-wider truncate"></h1>
             </div>
-            <div class="text-right">
+            <div class="text-right shrink-0">
                 <span id="user-points" class="text-3xl font-black text-yellow-400 leading-none">0</span>
                 <span class="text-[9px] text-slate-400 uppercase font-bold block">Puntos Reales</span>
             </div>
@@ -126,15 +126,16 @@
             <span id="toast-subtext" class="text-xl text-white/90"></span>
         </div>
 
-        <main class="flex-1 flex flex-col items-center justify-center p-6 relative">
-            <div class="w-full max-w-sm space-y-6">
+        <main class="flex-1 flex flex-col items-center justify-center p-6 relative w-full overflow-y-auto">
+            <div class="w-full max-w-[320px] sm:max-w-sm space-y-6 mx-auto">
                 <div class="text-center">
                     <p class="text-yellow-500 text-[10px] font-black tracking-[0.3em] uppercase mb-2">Nueva Matrícula</p>
-                    <div class="relative flex items-stretch shadow-[0_0_30px_rgba(250,204,21,0.15)] rounded-2xl bg-white focus-within:ring-4 focus-within:ring-yellow-400/50 transition-all">
-                        <div class="bg-blue-700 w-10 rounded-l-2xl flex flex-col items-center justify-center p-1">
+                    
+                    <div class="relative flex items-stretch shadow-[0_0_30px_rgba(250,204,21,0.15)] rounded-2xl bg-white focus-within:ring-4 focus-within:ring-yellow-400/50 transition-all overflow-hidden w-full">
+                        <div class="bg-blue-700 w-10 shrink-0 flex flex-col items-center justify-center p-1">
                             <span class="text-[12px] font-black text-white">E</span>
                         </div>
-                        <input id="plate-input" type="number" pattern="[0-9]*" inputmode="numeric" placeholder="0000" class="flex-1 bg-white text-slate-900 text-center text-6xl font-black plate-font outline-none py-6" onkeypress="if(event.key === 'Enter') addPlate()">
+                        <input id="plate-input" type="number" pattern="[0-9]*" inputmode="numeric" placeholder="0000" class="flex-1 min-w-0 w-full bg-white text-slate-900 text-center text-5xl sm:text-6xl font-black plate-font outline-none py-4" onkeypress="if(event.key === 'Enter') addPlate()">
                     </div>
                 </div>
                 <button onclick="addPlate()" class="w-full bg-yellow-400 text-slate-950 font-black py-4 rounded-xl text-xl shadow-lg active:scale-95 transition-transform">
@@ -144,14 +145,14 @@
         </main>
 
         <div id="recent-panel" class="absolute bottom-0 left-0 right-0 bg-slate-900 border-t border-slate-700 transition-transform duration-300 transform translate-y-full h-[60vh] flex flex-col shadow-[0_-10px_40px_rgba(0,0,0,0.5)] z-40">
-            <div class="p-4 flex justify-between items-center border-b border-slate-800 bg-slate-950">
+            <div class="p-4 flex justify-between items-center border-b border-slate-800 bg-slate-950 shrink-0">
                 <h3 class="font-black text-yellow-400">Tus Últimas 10 Capturas</h3>
                 <button onclick="toggleRecent()" class="bg-slate-800 p-2 rounded text-xs font-bold">Cerrar ▼</button>
             </div>
             <div id="recent-list" class="flex-1 overflow-y-auto p-4 space-y-2 bg-slate-900"></div>
         </div>
 
-        <footer class="bg-slate-950 p-4 border-t border-slate-800 grid grid-cols-2 gap-3 z-30">
+        <footer class="bg-slate-950 p-4 border-t border-slate-800 grid grid-cols-2 gap-3 z-30 shrink-0">
             <button onclick="toggleRecent()" class="bg-slate-900 border border-slate-700 py-3 rounded-xl font-bold text-sm text-slate-300 flex items-center justify-center gap-2 active:bg-slate-800">
                 <span>⏱️</span> Últimas Cazadas
             </button>
@@ -177,7 +178,6 @@
             'FER': 'https://github.com/jakeko99-pixel/matriculas/blob/main/Fer%20juego.jpeg?raw=true'
         };
 
-        // LÓGICAS DE MATRÍCULA Y PUNTUACIÓN
         function isPoker(str) { return str.length === 4 && str[0] === str[1] && str[1] === str[2] && str[2] === str[3]; }
         function isEscoba(str) { return str.length === 4 && (parseInt(str[0]) + parseInt(str[1]) + parseInt(str[2]) + parseInt(str[3]) === 15); }
         function isCapicua(str) { return str.length === 4 && str[0] === str[3] && str[1] === str[2]; }
@@ -189,19 +189,11 @@
             return 1;
         }
 
-        // --- NUEVA LÓGICA DE PUNTOS EXACTOS (SIN DESBALANCEO) ---
         function calculateExactPoints(plateStr, isFirst) {
             let base = getPlateBaseValue(plateStr);
-            
-            // Si no eres el primero, te llevas el valor base.
             if (!isFirst) return base;
-            
-            // Si eres el primero, aplicamos el bonus controlado:
-            if (base === 1) {
-                return base + 1; // Normal: 1 + 1 extra = 2 pts
-            } else {
-                return base + 5; // Especiales: Base + 5 extra
-            }
+            if (base === 1) return base + 1; 
+            else return base + 5; 
         }
 
         function getLevel(points) {
@@ -225,7 +217,6 @@
         function openStats() { document.getElementById('stats-modal').classList.remove('hidden'); renderStats(); }
         function closeStats() { document.getElementById('stats-modal').classList.add('hidden'); }
 
-        // --- LÓGICA DE BLOQUES (MILLARES) ---
         function openUniverse() {
             const globalPlates = window.currentModalData.GLOBAL || [];
             let content = '';
@@ -251,7 +242,6 @@
         }
         function closeUniverse() { document.getElementById('universe-modal').classList.add('hidden'); }
 
-        // --- LÓGICA DE PESTAÑAS (DENTRO DEL MILLAR) ---
         let currentThousandDigit = 0;
         let currentThousandTab = 'collected';
 
@@ -350,7 +340,6 @@
         }
         function closeDetails() { document.getElementById('details-modal').classList.add('hidden'); }
 
-        // --- RENDERIZADO PRINCIPAL DE ESTADÍSTICAS ---
         function renderStats() {
             const content = document.getElementById('stats-content');
             if(!globalDataCache.users) { content.innerHTML = '<p>Cargando datos...</p>'; return; }
@@ -393,15 +382,11 @@
                 let arrPokers = [];
                 let truePoints = 0; 
 
-                // 1. Recorrer matrículas nuevas
                 for(let p in myPlates) {
                     if(!arrAportadas.includes(p)) {
                         arrAportadas.push(p);
-                        
-                        // Determinar si fue primero para esta matrícula
                         let wasFirst = false;
                         if (myPlates[p].isFirst === true) wasFirst = true;
-                        // Regla para matrículas antiguas donde pointsEarned era 2 si eras primero
                         else if (myPlates[p].pointsEarned && myPlates[p].pointsEarned % 2 === 0) wasFirst = true;
                         
                         truePoints += calculateExactPoints(p, wasFirst);
@@ -412,13 +397,11 @@
                     }
                 }
                 
-                // 2. Recorrer matrículas antiguas (legacy format: FER_0000)
                 for(let key in globalPlates) {
                     if(key.startsWith(playerName + '_')) {
                         let num = key.split('_')[1];
                         if(!arrAportadas.includes(num)) {
                             arrAportadas.push(num);
-                            // Las antiguas con prefijo implicaban ser el descubridor
                             truePoints += calculateExactPoints(num, true); 
                             
                             if(isCapicua(num)) arrCapicuas.push(num);
@@ -492,7 +475,6 @@
             content.innerHTML = html;
         }
 
-        // --- INICIALIZACIÓN Y CAZA ---
         function selectPlayer(name) {
             currentPlayer = name;
             document.getElementById('login-screen').classList.add('hidden');
@@ -505,7 +487,6 @@
         db.ref().on('value', (snap) => {
             globalDataCache = snap.val() || { users: {}, plates: {} };
             
-            // Calcular puntos para el menú inicial y cabecera en TIEMPO REAL
             const calculateUserLivePoints = (playerName) => {
                 let truePoints = 0;
                 let arrAportadas = [];
@@ -628,7 +609,6 @@
             
             if (plate.length !== 4) return;
 
-            // Si ya la tiene él mismo
             if (consolidatedUserPlates[plate]) {
                 showToast(0, false, true);
                 input.value = "";
@@ -641,18 +621,14 @@
                 const allPlates = snap.val() || {};
                 let isBonus = true;
 
-                // Si alguien en el mundo ya la cazó
                 if (allPlates[plate] || Object.keys(allPlates).some(k => k.includes(`_${plate}`))) {
                     isBonus = false;
                 }
 
-                // Calcular puntos exactos según la nueva regla
                 const pts = calculateExactPoints(plate, isBonus);
 
-                // Si es primero, la registra en el mundo
                 if (isBonus) db.ref(`plates/${plate}`).set({ discoverer: currentPlayer, timestamp: Date.now() });
                 
-                // La guarda en su perfil con los datos correctos
                 db.ref(`users/${currentPlayer}/my_plates/${plate}`).set({ 
                     timestamp: Date.now(),
                     pointsEarned: pts,
