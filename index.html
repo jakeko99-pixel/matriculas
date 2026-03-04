@@ -9,87 +9,115 @@
     <script src="https://www.gstatic.com/firebasejs/9.1.1/firebase-database-compat.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
-        body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; overscroll-behavior-y: none; }
+        body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; background-color: #020617; color: white; overscroll-behavior-y: none; }
         .plate-font { font-family: 'Courier New', Courier, monospace; letter-spacing: 6px; }
         
-        /* Animación para el mensaje rápido */
-        @keyframes popIn {
-            0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
-            50% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; }
-            100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        /* Animación limpia para el holograma de puntos */
+        @keyframes fadeUpOut {
+            0% { transform: translate(-50%, -10%); opacity: 0; }
+            20% { transform: translate(-50%, -50%); opacity: 1; scale: 1.1; }
+            80% { transform: translate(-50%, -50%); opacity: 1; scale: 1; }
+            100% { transform: translate(-50%, -90%); opacity: 0; }
         }
-        .toast-anim { animation: popIn 0.3s ease-out forwards; }
+        .toast-active { animation: fadeUpOut 1.5s forwards; display: flex !important; }
     </style>
 </head>
-<body class="bg-slate-950 text-white min-h-screen flex flex-col">
+<body class="flex flex-col h-screen w-screen overflow-hidden">
 
-    <div id="quick-toast" class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 px-8 py-6 rounded-3xl font-black text-5xl z-[9999] shadow-[0_10px_40px_rgba(0,0,0,0.8)] pointer-events-none opacity-0 transition-opacity duration-300 flex items-center gap-3">
-        <span id="toast-text"></span>
+    <div id="splash" onclick="closeSplash()" class="fixed inset-0 z-[1000] bg-slate-950 flex flex-col items-center justify-center transition-opacity duration-500 cursor-pointer">
+        <img src="https://raw.githubusercontent.com/jakeko99-pixel/matriculas/main/icono.png" class="w-64 h-64 object-contain animate-pulse mb-8 drop-shadow-[0_0_25px_rgba(250,204,21,0.3)]">
+        <h1 class="text-3xl font-black text-yellow-400 italic tracking-tighter">EL COLECCIONISTA</h1>
+        <p class="text-slate-500 text-xs tracking-[0.4em] uppercase mt-2">De Matrículas</p>
+        <p class="mt-12 text-slate-400 text-sm animate-bounce font-bold bg-slate-900 px-6 py-2 rounded-full">Toca para empezar</p>
     </div>
 
-    <div id="login-screen" class="fixed inset-0 flex flex-col bg-slate-900 z-[500] overflow-y-auto">
-        <div class="p-8 flex flex-col items-center min-h-screen justify-center">
-            <img src="https://raw.githubusercontent.com/jakeko99-pixel/matriculas/main/icono.png" class="w-32 h-32 object-contain mb-4 drop-shadow-[0_0_15px_rgba(250,204,21,0.5)]">
-            <h1 class="text-2xl font-black text-yellow-400 italic tracking-tighter mb-8">EL COLECCIONISTA</h1>
-            
-            <div class="grid grid-cols-1 gap-4 w-full max-w-sm">
-                <button onclick="selectPlayer('NOA')" class="bg-slate-800 p-4 rounded-3xl flex items-center gap-4 border-2 border-transparent active:border-pink-500 transition-all">
-                    <img src="https://github.com/jakeko99-pixel/matriculas/blob/main/Noa%20Lodres%20Juego.jpeg?raw=true" class="w-14 h-14 rounded-full border-2 border-pink-500 object-cover">
-                    <span class="text-xl font-bold uppercase">Noa</span>
-                </button>
-                <button onclick="selectPlayer('ERIK')" class="bg-slate-800 p-4 rounded-3xl flex items-center gap-4 border-2 border-transparent active:border-blue-500 transition-all">
-                    <img src="https://github.com/jakeko99-pixel/matriculas/blob/main/Erik%20Juego.png?raw=true" class="w-14 h-14 rounded-full border-2 border-blue-500 object-cover">
-                    <span class="text-xl font-bold uppercase">Erik</span>
-                </button>
-                <button onclick="selectPlayer('FER')" class="bg-slate-800 p-4 rounded-3xl flex items-center gap-4 border-2 border-transparent active:border-green-500 transition-all">
-                    <img src="https://github.com/jakeko99-pixel/matriculas/blob/main/Fer%20juego.jpeg?raw=true" class="w-14 h-14 rounded-full border-2 border-green-500 object-cover">
-                    <span class="text-xl font-bold uppercase">Fer</span>
-                </button>
-            </div>
-            
-            <div id="main-leaderboard" class="mt-8 w-full max-w-sm space-y-2"></div>
-        </div>
-    </div>
-
-    <div id="main-app" class="hidden flex-1 flex flex-col h-screen overflow-hidden">
+    <div id="login-screen" class="hidden fixed inset-0 flex flex-col items-center justify-center bg-slate-950 z-[500] p-6">
+        <h2 class="text-2xl font-black text-white mb-8 italic">¿Quién caza hoy?</h2>
         
-        <header class="bg-slate-900 p-5 border-b border-slate-800 flex justify-between items-center shadow-lg z-50">
+        <div class="grid grid-cols-1 gap-4 w-full max-w-sm mb-8">
+            <button onclick="selectPlayer('NOA')" class="bg-slate-900 p-4 rounded-3xl flex items-center gap-4 border border-slate-800 active:border-pink-500 transition-all shadow-lg">
+                <img src="https://github.com/jakeko99-pixel/matriculas/blob/main/Noa%20Lodres%20Juego.jpeg?raw=true" class="w-16 h-16 rounded-full border-2 border-pink-500 object-cover">
+                <span class="text-2xl font-black uppercase tracking-wide">Noa</span>
+            </button>
+            <button onclick="selectPlayer('ERIK')" class="bg-slate-900 p-4 rounded-3xl flex items-center gap-4 border border-slate-800 active:border-blue-500 transition-all shadow-lg">
+                <img src="https://github.com/jakeko99-pixel/matriculas/blob/main/Erik%20Juego.png?raw=true" class="w-16 h-16 rounded-full border-2 border-blue-500 object-cover">
+                <span class="text-2xl font-black uppercase tracking-wide">Erik</span>
+            </button>
+            <button onclick="selectPlayer('FER')" class="bg-slate-900 p-4 rounded-3xl flex items-center gap-4 border border-slate-800 active:border-green-500 transition-all shadow-lg">
+                <img src="https://github.com/jakeko99-pixel/matriculas/blob/main/Fer%20juego.jpeg?raw=true" class="w-16 h-16 rounded-full border-2 border-green-500 object-cover">
+                <span class="text-2xl font-black uppercase tracking-wide">Fer</span>
+            </button>
+        </div>
+
+        <button onclick="openStats()" class="bg-yellow-400 text-slate-950 font-black px-8 py-4 rounded-2xl w-full max-w-sm shadow-[0_0_20px_rgba(250,204,21,0.2)] active:scale-95 transition-transform flex items-center justify-center gap-2">
+            <span>🏆</span> VER RANKING Y ESTADÍSTICAS
+        </button>
+    </div>
+
+    <div id="stats-modal" class="hidden fixed inset-0 bg-slate-950 z-[600] flex flex-col">
+        <div class="p-6 bg-slate-900 border-b border-slate-800 flex justify-between items-center">
+            <h2 class="text-xl font-black text-yellow-400">Estadísticas</h2>
+            <button onclick="closeStats()" class="bg-slate-800 text-white px-4 py-2 rounded-lg font-bold">Cerrar</button>
+        </div>
+        <div class="flex-1 overflow-y-auto p-6 space-y-6" id="stats-content">
+            </div>
+    </div>
+
+    <div id="main-app" class="hidden flex-1 flex flex-col relative">
+        
+        <header class="bg-slate-900 p-4 border-b border-slate-800 flex justify-between items-center shadow-md">
             <div class="flex items-center gap-3">
-                <img id="current-avatar" src="" class="w-12 h-12 rounded-full border-2 border-yellow-400 object-cover">
-                <div>
-                    <h1 id="current-name" class="font-black text-xl text-yellow-400"></h1>
-                </div>
+                <img id="current-avatar" src="" class="w-10 h-10 rounded-full border-2 border-yellow-400 object-cover">
+                <h1 id="current-name" class="font-black text-xl text-white uppercase tracking-wider"></h1>
             </div>
             <div class="text-right">
-                <span id="user-points" class="text-4xl font-black block leading-none">0</span>
-                <span class="text-[9px] text-yellow-500 uppercase font-bold tracking-widest">Puntos Totales</span>
+                <span id="user-points" class="text-3xl font-black text-yellow-400 leading-none">0</span>
+                <span class="text-[9px] text-slate-400 uppercase font-bold block">Puntos</span>
             </div>
         </header>
 
-        <div class="p-6 bg-slate-950 flex flex-col items-center justify-center border-b border-slate-900 shadow-inner">
-            <p class="text-slate-500 text-[10px] font-bold tracking-[0.2em] uppercase mb-3">Introduce la Matrícula</p>
-            <div class="w-full max-w-sm relative flex items-stretch shadow-[0_0_40px_rgba(250,204,21,0.1)] rounded-2xl">
-                <div class="bg-blue-700 w-8 rounded-l-2xl flex flex-col items-center justify-center p-1 border-y border-l border-slate-700">
-                    <span class="text-[10px] font-black text-white">E</span>
-                </div>
-                <input id="plate-input" type="number" pattern="[0-9]*" inputmode="numeric" placeholder="0000" 
-                    class="flex-1 bg-white text-slate-900 text-center text-5xl font-black plate-font outline-none py-4 border-y border-slate-700"
-                    onkeypress="if(event.key === 'Enter') addPlate()">
-                <button onclick="addPlate()" class="bg-yellow-400 text-slate-950 font-black px-6 rounded-r-2xl text-xl hover:bg-yellow-300 active:bg-yellow-500 transition-colors border-y border-r border-slate-700">
-                    CAZAR
-                </button>
-            </div>
+        <div id="quick-toast" class="hidden fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 px-8 py-4 rounded-3xl font-black text-6xl z-[9999] shadow-[0_20px_50px_rgba(0,0,0,0.9)] pointer-events-none items-center gap-3 justify-center">
+            <span id="toast-text"></span>
         </div>
 
-        <main class="flex-1 overflow-y-auto p-4 pb-10 bg-slate-900">
-            <div class="flex justify-between items-end mb-4 px-2">
-                <h2 class="text-slate-400 text-xs font-black uppercase tracking-widest">Tu Álbum de Bloques</h2>
-                <p class="text-[10px] text-slate-500 font-bold"><span id="total-plates-count">0</span>/10000 conseguidas</p>
-            </div>
-            
-            <div id="blocks-container" class="space-y-3">
+        <main class="flex-1 flex flex-col items-center justify-center p-6 relative">
+            <div class="w-full max-w-sm space-y-6">
+                <div class="text-center">
+                    <p class="text-yellow-500 text-[10px] font-black tracking-[0.3em] uppercase mb-2">Nueva Matrícula</p>
+                    
+                    <div class="relative flex items-stretch shadow-[0_0_30px_rgba(250,204,21,0.15)] rounded-2xl bg-white focus-within:ring-4 focus-within:ring-yellow-400/50 transition-all">
+                        <div class="bg-blue-700 w-10 rounded-l-2xl flex flex-col items-center justify-center p-1">
+                            <span class="text-[12px] font-black text-white">E</span>
+                        </div>
+                        <input id="plate-input" type="number" pattern="[0-9]*" inputmode="numeric" placeholder="0000" 
+                            class="flex-1 bg-white text-slate-900 text-center text-6xl font-black plate-font outline-none py-6"
+                            onkeypress="if(event.key === 'Enter') addPlate()">
+                    </div>
                 </div>
+
+                <button onclick="addPlate()" class="w-full bg-yellow-400 text-slate-950 font-black py-4 rounded-xl text-xl shadow-lg active:scale-95 transition-transform">
+                    CAZAR (INTRO)
+                </button>
+            </div>
         </main>
+
+        <div id="recent-panel" class="absolute bottom-0 left-0 right-0 bg-slate-900 border-t border-slate-700 transition-transform duration-300 transform translate-y-full h-[60vh] flex flex-col shadow-[0_-10px_40px_rgba(0,0,0,0.5)] z-40">
+            <div class="p-4 flex justify-between items-center border-b border-slate-800 bg-slate-950">
+                <h3 class="font-black text-yellow-400">Tus Últimas 10 Capturas</h3>
+                <button onclick="toggleRecent()" class="bg-slate-800 p-2 rounded text-xs font-bold">Cerrar ▼</button>
+            </div>
+            <div id="recent-list" class="flex-1 overflow-y-auto p-4 space-y-2 bg-slate-900">
+                </div>
+        </div>
+
+        <footer class="bg-slate-950 p-4 border-t border-slate-800 grid grid-cols-2 gap-3 z-30">
+            <button onclick="toggleRecent()" class="bg-slate-900 border border-slate-700 py-3 rounded-xl font-bold text-sm text-slate-300 flex items-center justify-center gap-2 active:bg-slate-800">
+                <span>⏱️</span> Últimas Cazadas
+            </button>
+            <button onclick="openStats()" class="bg-slate-900 border border-slate-700 py-3 rounded-xl font-bold text-sm text-slate-300 flex items-center justify-center gap-2 active:bg-slate-800">
+                <span>📊</span> Álbum y Ranking
+            </button>
+        </footer>
     </div>
 
     <script>
@@ -98,214 +126,272 @@
         const db = firebase.database();
 
         let currentPlayer = null;
-        let consolidatedUserPlates = {}; // Guarda todo el historial (nuevo y viejo)
+        let consolidatedUserPlates = {}; 
+        let globalDataCache = {};
+        
         const defaultAvatars = {
             'NOA': 'https://github.com/jakeko99-pixel/matriculas/blob/main/Noa%20Lodres%20Juego.jpeg?raw=true',
             'ERIK': 'https://github.com/jakeko99-pixel/matriculas/blob/main/Erik%20Juego.png?raw=true',
             'FER': 'https://github.com/jakeko99-pixel/matriculas/blob/main/Fer%20juego.jpeg?raw=true'
         };
 
-        // UI: Mostrar Notificación Rápida
-        function showQuickToast(points) {
-            const toast = document.getElementById('quick-toast');
-            const text = document.getElementById('toast-text');
-            
-            if(points === 2) {
-                toast.className = "fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 px-8 py-6 rounded-3xl font-black text-5xl z-[9999] shadow-[0_0_60px_rgba(249,115,22,0.6)] pointer-events-none flex items-center gap-3 bg-orange-500 text-white toast-anim";
-                text.innerText = "+2 🔥";
-            } else if(points === 1) {
-                toast.className = "fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 px-8 py-6 rounded-3xl font-black text-5xl z-[9999] shadow-[0_0_60px_rgba(34,197,94,0.6)] pointer-events-none flex items-center gap-3 bg-green-500 text-white toast-anim";
-                text.innerText = "+1 🟢";
-            } else {
-                toast.className = "fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 px-6 py-4 rounded-2xl font-black text-2xl z-[9999] shadow-[0_0_40px_rgba(239,68,68,0.6)] pointer-events-none flex items-center gap-3 bg-red-500 text-white toast-anim";
-                text.innerText = "¡REPETIDA! ❌";
-            }
-
-            toast.style.opacity = '1';
-            setTimeout(() => { toast.style.opacity = '0'; }, 1000); // Desaparece rápido en 1 seg
+        function closeSplash() {
+            document.getElementById('splash').classList.add('opacity-0');
+            setTimeout(() => {
+                document.getElementById('splash').style.display = 'none';
+                document.getElementById('login-screen').classList.remove('hidden');
+            }, 500);
         }
 
+        // --- SISTEMA DE ESTADÍSTICAS ---
+        function isCapicua(str) { return str.length === 4 && str[0] === str[3] && str[1] === str[2]; }
+        
+        // FÓRMULA CORREGIDA: LAS ESCOBAS SUMAN 15
+        function isEscoba(str) { 
+            return str.length === 4 && (parseInt(str[0]) + parseInt(str[1]) + parseInt(str[2]) + parseInt(str[3]) === 15); 
+        }
+
+        function openStats() {
+            document.getElementById('stats-modal').classList.remove('hidden');
+            renderStats();
+        }
+        function closeStats() {
+            document.getElementById('stats-modal').classList.add('hidden');
+        }
+
+        function renderStats() {
+            const content = document.getElementById('stats-content');
+            if(!globalDataCache.users) { content.innerHTML = '<p>Cargando datos...</p>'; return; }
+
+            const users = globalDataCache.users;
+            const globalPlates = globalDataCache.plates || {};
+            
+            // Reconstruir todas las matrículas únicas del mundo
+            let allUniquePlates = new Set();
+            for(let key in globalPlates) {
+                if(key.includes('_')) allUniquePlates.add(key.split('_')[1]); // Viejas
+                else allUniquePlates.add(key); // Nuevas
+            }
+            
+            let totalWorld = allUniquePlates.size;
+            let missing = 10000 - totalWorld;
+            let percentage = ((totalWorld / 10000) * 100).toFixed(2);
+
+            let html = `
+                <div class="bg-slate-950 p-5 rounded-2xl border border-slate-800 text-center shadow-lg">
+                    <h3 class="text-slate-400 text-xs font-black tracking-widest uppercase mb-2">Misión Familiar</h3>
+                    <div class="text-4xl font-black text-yellow-400 mb-2">${totalWorld} <span class="text-lg text-slate-500">/ 10000</span></div>
+                    <div class="h-2 bg-slate-900 rounded-full w-full overflow-hidden mb-2">
+                        <div class="h-full bg-yellow-400" style="width: ${percentage}%"></div>
+                    </div>
+                    <p class="text-xs text-slate-400">¡Nos faltan <span class="text-white font-bold">${missing}</span> matrículas!</p>
+                </div>
+                <h3 class="text-white font-black text-xl mt-6 mb-2 flex items-center gap-2">🏆 Ranking Detallado</h3>
+            `;
+
+            // Procesar datos de cada jugador
+            let playersStats = [];
+            for(let playerName of ['NOA', 'ERIK', 'FER']) { // Fijos para asegurar orden
+                let pData = users[playerName] || {};
+                let platesCount = 0;
+                let capicuas = 0;
+                let escobas = 0;
+
+                // Contar nuevas
+                for(let p in pData.my_plates || {}) {
+                    platesCount++;
+                    if(isCapicua(p)) capicuas++;
+                    if(isEscoba(p)) escobas++;
+                }
+                // Contar viejas de la base global
+                for(let key in globalPlates) {
+                    if(key.startsWith(playerName + '_')) {
+                        let num = key.split('_')[1];
+                        platesCount++;
+                        if(isCapicua(num)) capicuas++;
+                        if(isEscoba(num)) escobas++;
+                    }
+                }
+
+                playersStats.push({
+                    name: playerName,
+                    points: pData.points || 0,
+                    totalPlates: platesCount,
+                    capicuas: capicuas,
+                    escobas: escobas
+                });
+            }
+
+            playersStats.sort((a,b) => b.points - a.points); // Ordenar por puntos
+
+            playersStats.forEach((p, index) => {
+                let badge = index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉';
+                html += `
+                    <div class="bg-slate-800 rounded-2xl p-4 flex flex-col gap-3 border border-slate-700">
+                        <div class="flex justify-between items-center border-b border-slate-700 pb-3">
+                            <div class="flex items-center gap-3">
+                                <span class="text-2xl">${badge}</span>
+                                <img src="${defaultAvatars[p.name]}" class="w-10 h-10 rounded-full border border-slate-500">
+                                <span class="font-black text-lg uppercase">${p.name}</span>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-2xl font-black text-yellow-400 leading-none block">${p.points}</span>
+                                <span class="text-[9px] text-slate-400 uppercase font-bold">Puntos</span>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-3 gap-2 text-center">
+                            <div class="bg-slate-900 rounded-lg p-2">
+                                <span class="block text-xs text-slate-400">Aportadas</span>
+                                <span class="font-bold text-white">${p.totalPlates}</span>
+                            </div>
+                            <div class="bg-slate-900 rounded-lg p-2">
+                                <span class="block text-xs text-slate-400">Capicúas</span>
+                                <span class="font-bold text-pink-400">${p.capicuas}</span>
+                            </div>
+                            <div class="bg-slate-900 rounded-lg p-2">
+                                <span class="block text-xs text-slate-400">Escobas</span>
+                                <span class="font-bold text-blue-400">${p.escobas}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            content.innerHTML = html;
+        }
+
+        // --- SISTEMA DE JUEGO PRINCIPAL ---
         function selectPlayer(name) {
             currentPlayer = name;
             document.getElementById('login-screen').classList.add('hidden');
             document.getElementById('main-app').classList.remove('hidden');
             document.getElementById('current-name').innerText = name;
-            document.getElementById('current-avatar').src = defaultAvatars[name] || "https://raw.githubusercontent.com/jakeko99-pixel/matriculas/main/icono.png";
-            
-            // Foco automático en el input al entrar
+            document.getElementById('current-avatar').src = defaultAvatars[name];
             setTimeout(() => document.getElementById('plate-input').focus(), 300);
-            
-            listenToData();
         }
 
-        // Carga el ranking en la pantalla de inicio
-        db.ref('users').on('value', (snap) => {
-            if(currentPlayer) return; // Solo si estamos en login
-            const users = snap.val() || {};
-            const sorted = Object.entries(users).map(([n, d]) => ({n, ...d})).sort((a,b) => (b.points||0) - (a.points||0));
-            document.getElementById('main-leaderboard').innerHTML = sorted.map((u, i) => `
-                <div class="flex items-center justify-between bg-slate-950/50 p-3 rounded-2xl border border-slate-800">
-                    <div class="flex items-center gap-3">
-                        <span class="text-slate-600 font-bold italic text-sm w-4">${i+1}</span>
-                        <span class="font-bold text-sm uppercase text-slate-300">${u.n}</span>
-                    </div>
-                    <span class="text-yellow-400 font-black">${u.points || 0} pts</span>
-                </div>
-            `).join('');
-        });
+        db.ref().on('value', (snap) => {
+            globalDataCache = snap.val() || { users: {}, plates: {} };
+            
+            if(currentPlayer) {
+                const myPoints = globalDataCache.users[currentPlayer]?.points || 0;
+                document.getElementById('user-points').innerText = myPoints;
 
-        function listenToData() {
-            db.ref().on('value', (snap) => {
-                const data = snap.val() || {};
-                const users = data.users || {};
-                const globalPlates = data.plates || {};
-                
-                // 1. Actualizar Puntos
-                document.getElementById('user-points').innerText = users[currentPlayer]?.points || 0;
-
-                // 2. RECOPILAR TODAS LAS MATRÍCULAS DEL USUARIO (Nuevas y Antiguas)
+                // Reconstruir lista personal consolidada
                 consolidatedUserPlates = {};
-                
-                // Formato Nuevo: users/FER/my_plates/1234
-                const newFormatPlates = users[currentPlayer]?.my_plates || {};
-                for(let p in newFormatPlates) {
-                    consolidatedUserPlates[p] = { 
-                        pointsEarned: newFormatPlates[p].pointsEarned || 1, 
-                        source: 'new' 
-                    };
+                const newPlates = globalDataCache.users[currentPlayer]?.my_plates || {};
+                for(let p in newPlates) {
+                    consolidatedUserPlates[p] = { pointsEarned: newPlates[p].pointsEarned || 1, source: 'new', time: newPlates[p].timestamp || 0 };
                 }
-
-                // Formato Antiguo: plates/FER_1234 (Soluciona tu problema de Firebase)
+                const globalPlates = globalDataCache.plates || {};
                 for(let key in globalPlates) {
                     if(key.startsWith(currentPlayer + '_')) {
                         const num = key.split('_')[1];
                         if(!consolidatedUserPlates[num]) {
-                            consolidatedUserPlates[num] = { 
-                                pointsEarned: 1, // Por defecto las viejas sumaron 1
-                                source: 'old', 
-                                originalKey: key 
-                            };
+                            consolidatedUserPlates[num] = { pointsEarned: 1, source: 'old', originalKey: key, time: 0 };
                         }
                     }
                 }
-
-                renderBlocks();
-            });
-        }
-
-        function renderBlocks() {
-            const container = document.getElementById('blocks-container');
-            let html = '';
-            let totalCaught = 0;
-
-            // Agrupar matrículas por su primer dígito (Bloques del 0 al 9)
-            const blocks = { 0:[], 1:[], 2:[], 3:[], 4:[], 5:[], 6:[], 7:[], 8:[], 9:[] };
-            
-            for(let p in consolidatedUserPlates) {
-                const firstDigit = p.charAt(0);
-                if(blocks[firstDigit]) blocks[firstDigit].push(p);
-                totalCaught++;
+                renderRecentPlates();
             }
+            // Si el modal de stats está abierto, actualizarlo en vivo
+            if(!document.getElementById('stats-modal').classList.contains('hidden')) renderStats();
+        });
 
-            document.getElementById('total-plates-count').innerText = totalCaught;
-
-            for(let i=0; i<=9; i++) {
-                const platesInBlock = blocks[i].sort(); // Ordenar de menor a mayor
-                const count = platesInBlock.length;
-                const missing = 1000 - count;
-                const percentage = (count / 1000) * 100;
-
-                html += `
-                    <div class="bg-slate-800 rounded-2xl overflow-hidden border border-slate-700 transition-all">
-                        <div class="p-4 flex items-center justify-between cursor-pointer active:bg-slate-700" onclick="toggleBlock(${i})">
-                            <div class="flex items-center gap-3">
-                                <div class="bg-slate-900 w-10 h-10 rounded-xl flex items-center justify-center font-black text-xl text-yellow-400 border border-slate-700">${i}</div>
-                                <div>
-                                    <h3 class="font-bold text-sm">Bloque ${i}000</h3>
-                                    <p class="text-[10px] text-slate-400">Has cazado ${count} <span class="text-slate-600">| Faltan ${missing}</span></p>
-                                </div>
-                            </div>
-                            <span class="text-slate-500 font-bold" id="arrow-${i}">▼</span>
-                        </div>
-                        
-                        <div class="h-1 bg-slate-900 w-full"><div class="h-full bg-yellow-400" style="width: ${percentage}%"></div></div>
-
-                        <div id="block-content-${i}" class="hidden p-4 bg-slate-900/50 border-t border-slate-700/50">
-                            ${count === 0 ? `<p class="text-xs text-center text-slate-500 py-2 italic">Aún no tienes matrículas de este bloque.</p>` : `
-                                <div class="grid grid-cols-2 gap-2">
-                                    ${platesInBlock.map(p => `
-                                        <div class="bg-white rounded p-2 flex justify-between items-center relative group">
-                                            <span class="text-slate-900 font-black plate-font text-lg tracking-widest">${p}</span>
-                                            <button onclick="deletePlate('${p}')" class="bg-red-500 text-white rounded w-6 h-6 flex items-center justify-center text-xs font-black active:scale-90">X</button>
-                                        </div>
-                                    `).join('')}
-                                </div>
-                            `}
-                        </div>
-                    </div>
-                `;
-            }
-            container.innerHTML = html;
-        }
-
-        function toggleBlock(id) {
-            const content = document.getElementById(`block-content-${id}`);
-            const arrow = document.getElementById(`arrow-${id}`);
-            if(content.classList.contains('hidden')) {
-                content.classList.remove('hidden');
-                arrow.innerText = '▲';
+        function toggleRecent() {
+            const panel = document.getElementById('recent-panel');
+            if(panel.classList.contains('translate-y-full')) {
+                panel.classList.remove('translate-y-full');
             } else {
-                content.classList.add('hidden');
-                arrow.innerText = '▼';
+                panel.classList.add('translate-y-full');
             }
+        }
+
+        function renderRecentPlates() {
+            const list = document.getElementById('recent-list');
+            // Ordenar por tiempo (las nuevas tienen timestamp, las viejas 0)
+            const sorted = Object.entries(consolidatedUserPlates)
+                .sort((a,b) => b[1].time - a[1].time)
+                .slice(0, 10); // Solo las 10 últimas
+
+            if(sorted.length === 0) {
+                list.innerHTML = '<p class="text-slate-500 text-center text-sm mt-4">Aún no has cazado nada.</p>';
+                return;
+            }
+
+            list.innerHTML = sorted.map(([plate, data]) => `
+                <div class="bg-white rounded-xl p-3 flex justify-between items-center shadow-sm">
+                    <div class="flex items-center gap-3">
+                        <div class="bg-blue-700 w-6 h-8 rounded flex items-center justify-center text-[8px] font-black text-white">E</div>
+                        <span class="text-slate-900 font-black plate-font text-2xl">${plate}</span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span class="text-xs font-bold ${data.pointsEarned === 2 ? 'text-orange-500' : 'text-green-600'}">+${data.pointsEarned} pts</span>
+                        <button onclick="deletePlate('${plate}')" class="bg-red-500 text-white rounded-lg w-10 h-10 flex items-center justify-center font-black active:scale-90 transition-transform">X</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function showToast(pts) {
+            const toast = document.getElementById('quick-toast');
+            const text = document.getElementById('toast-text');
+            
+            toast.classList.remove('hidden', 'toast-active');
+            void toast.offsetWidth; // Forzar reinicio de animación
+            
+            if(pts === 2) {
+                toast.className = "fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 px-10 py-6 rounded-full font-black text-6xl z-[9999] shadow-[0_10px_50px_rgba(249,115,22,0.8)] bg-gradient-to-r from-orange-500 to-red-500 text-white toast-active";
+                text.innerText = "+2 🔥";
+            } else if(pts === 1) {
+                toast.className = "fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 px-10 py-6 rounded-full font-black text-6xl z-[9999] shadow-[0_10px_50px_rgba(34,197,94,0.8)] bg-gradient-to-r from-green-500 to-emerald-500 text-white toast-active";
+                text.innerText = "+1 🟢";
+            } else {
+                toast.className = "fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 px-8 py-4 rounded-full font-black text-3xl z-[9999] shadow-[0_10px_50px_rgba(239,68,68,0.8)] bg-red-600 text-white toast-active";
+                text.innerText = "REPETIDA ❌";
+            }
+
+            // Ocultar del todo cuando acabe la animación (1.5s)
+            setTimeout(() => { toast.classList.add('hidden'); toast.classList.remove('toast-active'); }, 1500);
         }
 
         function addPlate() {
             const input = document.getElementById('plate-input');
-            let plate = input.value.toString().replace(/\D/g, ''); // Solo números
+            let plate = input.value.toString().replace(/\D/g, ''); 
             
-            if (plate.length !== 4) return; // Si no hay 4 números, no hace nada
+            if (plate.length !== 4) return;
 
-            // Comprobar si EL USUARIO ya la tiene
             if (consolidatedUserPlates[plate]) {
-                showQuickToast(0); // Muestra "Repetida"
+                showToast(0);
                 input.value = "";
                 return;
             }
 
-            // Desactivar input un segundo para evitar dobles envíos
             input.disabled = true;
 
-            // Comprobar si existe en la base GLOBAL (para el bonus)
             db.ref(`plates`).once('value', (snap) => {
                 const allPlates = snap.val() || {};
                 let isBonus = true;
 
-                // Revisar si alguien la cazó con el formato nuevo o el viejo
                 if (allPlates[plate] || Object.keys(allPlates).some(k => k.includes(`_${plate}`))) {
                     isBonus = false;
                 }
 
                 const pts = isBonus ? 2 : 1;
 
-                // Guardar como "descubierta" a nivel global si es Bonus
-                if (isBonus) {
-                    db.ref(`plates/${plate}`).set({ discoverer: currentPlayer, timestamp: Date.now() });
-                }
-
-                // Guardar en el perfil del usuario (Nuevo formato) ¡Y guardamos cuántos puntos dio!
+                if (isBonus) db.ref(`plates/${plate}`).set({ discoverer: currentPlayer, timestamp: Date.now() });
+                
                 db.ref(`users/${currentPlayer}/my_plates/${plate}`).set({ 
                     timestamp: Date.now(),
                     pointsEarned: pts 
                 });
 
-                // Sumar puntos
                 db.ref(`users/${currentPlayer}/points`).transaction(p => (p || 0) + pts);
                 
-                showQuickToast(pts);
+                showToast(pts);
                 input.value = "";
                 input.disabled = false;
-                input.focus(); // Devuelve el teclado automáticamente
+                input.focus();
             });
         }
 
@@ -313,20 +399,16 @@
             const plateData = consolidatedUserPlates[plate];
             if(!plateData) return;
 
-            // 1. Preguntar por seguridad
-            if(!confirm(`¿Borrar la matrícula ${plate}? Se te restarán ${plateData.pointsEarned} puntos.`)) return;
+            if(!confirm(`¿Borrar la matrícula ${plate}? Perderás ${plateData.pointsEarned} puntos.`)) return;
 
-            // 2. Restar LOS PUNTOS EXACTOS que dio en su momento
             db.ref(`users/${currentPlayer}/points`).transaction(p => {
                 let current = p || 0;
                 return (current - plateData.pointsEarned < 0) ? 0 : current - plateData.pointsEarned;
             });
 
-            // 3. Borrar de la base de datos según dónde estuviera guardada
             if(plateData.source === 'new') {
                 db.ref(`users/${currentPlayer}/my_plates/${plate}`).remove();
             } else {
-                // Borrar el formato viejo (ej. FER_1234)
                 db.ref(`plates/${plateData.originalKey}`).remove();
             }
         }
