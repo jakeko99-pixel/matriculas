@@ -18,7 +18,7 @@
             80% { transform: translate(-50%, -50%); opacity: 1; scale: 1; }
             100% { transform: translate(-50%, -90%); opacity: 0; }
         }
-        .toast-active { animation: fadeUpOut 1.5s forwards; display: flex !important; }
+        .toast-active { animation: fadeUpOut 2s forwards; display: flex !important; }
     </style>
 </head>
 <body class="flex flex-col h-screen w-screen overflow-hidden">
@@ -121,8 +121,9 @@
             </div>
         </header>
 
-        <div id="quick-toast" class="hidden fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 px-8 py-4 rounded-3xl font-black text-6xl z-[9999] shadow-[0_20px_50px_rgba(0,0,0,0.9)] pointer-events-none items-center gap-3 justify-center">
-            <span id="toast-text"></span>
+        <div id="quick-toast" class="hidden fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 px-8 py-4 rounded-3xl font-black text-center z-[9999] shadow-[0_20px_50px_rgba(0,0,0,0.9)] pointer-events-none flex-col items-center gap-2 justify-center">
+            <span id="toast-text" class="text-5xl"></span>
+            <span id="toast-subtext" class="text-xl text-white/90"></span>
         </div>
 
         <main class="flex-1 flex flex-col items-center justify-center p-6 relative">
@@ -168,8 +169,6 @@
         let currentPlayer = null;
         let consolidatedUserPlates = {}; 
         let globalDataCache = {};
-        
-        // Almacenamos los datos para poder navegar por ellos sin bloqueos
         window.currentModalData = { NOA: {}, ERIK: {}, FER: {}, GLOBAL: [] };
         
         const defaultAvatars = {
@@ -177,6 +176,24 @@
             'ERIK': 'https://github.com/jakeko99-pixel/matriculas/blob/main/Erik%20Juego.png?raw=true',
             'FER': 'https://github.com/jakeko99-pixel/matriculas/blob/main/Fer%20juego.jpeg?raw=true'
         };
+
+        // LÓGICAS DE MATRÍCULA Y PUNTUACIÓN
+        function isPoker(str) { return str.length === 4 && str[0] === str[1] && str[1] === str[2] && str[2] === str[3]; }
+        function isEscoba(str) { return str.length === 4 && (parseInt(str[0]) + parseInt(str[1]) + parseInt(str[2]) + parseInt(str[3]) === 15); }
+        function isCapicua(str) { return str.length === 4 && str[0] === str[3] && str[1] === str[2]; }
+
+        function getPlateBaseValue(str) {
+            if (isPoker(str)) return 10;
+            if (isEscoba(str)) return 15;
+            if (isCapicua(str)) return 5;
+            return 1;
+        }
+
+        // Función central para calcular puntos exactos de una matrícula
+        function calculateExactPoints(plateStr, isFirst) {
+            let base = getPlateBaseValue(plateStr);
+            return isFirst ? (base * 2) : base;
+        }
 
         function getLevel(points) {
             if (points < 50) return "🚶 Peatón";
@@ -195,10 +212,6 @@
                 document.getElementById('login-screen').classList.remove('hidden');
             }, 500);
         }
-
-        function isCapicua(str) { return str.length === 4 && str[0] === str[3] && str[1] === str[2]; }
-        function isEscoba(str) { return str.length === 4 && (parseInt(str[0]) + parseInt(str[1]) + parseInt(str[2]) + parseInt(str[3]) === 15); }
-        function isPoker(str) { return str.length === 4 && str[0] === str[1] && str[1] === str[2] && str[2] === str[3]; }
 
         function openStats() { document.getElementById('stats-modal').classList.remove('hidden'); renderStats(); }
         function closeStats() { document.getElementById('stats-modal').classList.add('hidden'); }
@@ -304,7 +317,6 @@
             document.getElementById('thousand-content').innerHTML = html;
         }
 
-        // --- LÓGICA DE DETALLES DEL JUGADOR (El resto de modales) ---
         function showDetails(title, dataKey, subKey) {
             document.getElementById('details-title').innerText = title;
             const content = document.getElementById('details-content');
@@ -372,22 +384,34 @@
                 let arrPokers = [];
                 let truePoints = 0; 
 
+                // 1. Recorrer matrículas nuevas
                 for(let p in myPlates) {
                     if(!arrAportadas.includes(p)) {
                         arrAportadas.push(p);
-                        truePoints += (myPlates[p].pointsEarned || 1);
+                        
+                        // Determinar si fue primero para esta matrícula
+                        let wasFirst = false;
+                        if (myPlates[p].isFirst === true) wasFirst = true;
+                        // Regla para matrículas antiguas donde pointsEarned era 2 si eras primero
+                        else if (myPlates[p].pointsEarned && myPlates[p].pointsEarned % 2 === 0) wasFirst = true;
+                        
+                        truePoints += calculateExactPoints(p, wasFirst);
+
                         if(isCapicua(p)) arrCapicuas.push(p);
                         if(isEscoba(p)) arrEscobas.push(p);
                         if(isPoker(p)) arrPokers.push(p);
                     }
                 }
                 
+                // 2. Recorrer matrículas antiguas (legacy format: FER_0000)
                 for(let key in globalPlates) {
                     if(key.startsWith(playerName + '_')) {
                         let num = key.split('_')[1];
                         if(!arrAportadas.includes(num)) {
                             arrAportadas.push(num);
-                            truePoints += 2; 
+                            // Las antiguas con prefijo implicaban ser el descubridor (x2)
+                            truePoints += calculateExactPoints(num, true); 
+                            
                             if(isCapicua(num)) arrCapicuas.push(num);
                             if(isEscoba(num)) arrEscobas.push(num);
                             if(isPoker(num)) arrPokers.push(num);
@@ -459,7 +483,7 @@
             content.innerHTML = html;
         }
 
-        // --- INICIALIZACIÓN Y CAZA DE MATRÍCULAS ---
+        // --- INICIALIZACIÓN Y CAZA ---
         function selectPlayer(name) {
             currentPlayer = name;
             document.getElementById('login-screen').classList.add('hidden');
@@ -472,33 +496,59 @@
         db.ref().on('value', (snap) => {
             globalDataCache = snap.val() || { users: {}, plates: {} };
             
+            // Calcular puntos para el menú inicial y cabecera en TIEMPO REAL
+            const calculateUserLivePoints = (playerName) => {
+                let truePoints = 0;
+                let arrAportadas = [];
+                const pData = globalDataCache.users[playerName] || {};
+                const myPlates = pData.my_plates || {};
+                const globalPlates = globalDataCache.plates || {};
+
+                for(let p in myPlates) {
+                    if(!arrAportadas.includes(p)) {
+                        arrAportadas.push(p);
+                        let wasFirst = (myPlates[p].isFirst === true) || (myPlates[p].pointsEarned && myPlates[p].pointsEarned % 2 === 0);
+                        truePoints += calculateExactPoints(p, wasFirst);
+                    }
+                }
+                for(let key in globalPlates) {
+                    if(key.startsWith(playerName + '_')) {
+                        let num = key.split('_')[1];
+                        if(!arrAportadas.includes(num)) {
+                            arrAportadas.push(num);
+                            truePoints += calculateExactPoints(num, true); 
+                        }
+                    }
+                }
+                return truePoints;
+            };
+
             if(globalDataCache.users) {
                 ['NOA', 'ERIK', 'FER'].forEach(name => {
-                    let pts = 0;
-                    const myPlates = globalDataCache.users[name]?.my_plates || {};
-                    for(let p in myPlates) { pts += (myPlates[p].pointsEarned || 1); }
-                    
                     const levelElement = document.getElementById(`level-${name}`);
-                    if(levelElement) levelElement.innerText = getLevel(pts);
+                    if(levelElement) levelElement.innerText = getLevel(calculateUserLivePoints(name));
                 });
             }
 
             if(currentPlayer) {
-                let livePoints = 0;
-                const newPlates = globalDataCache.users[currentPlayer]?.my_plates || {};
-                for(let p in newPlates) { livePoints += (newPlates[p].pointsEarned || 1); }
-                document.getElementById('user-points').innerText = livePoints;
+                document.getElementById('user-points').innerText = calculateUserLivePoints(currentPlayer);
 
                 consolidatedUserPlates = {};
+                const newPlates = globalDataCache.users[currentPlayer]?.my_plates || {};
                 for(let p in newPlates) {
-                    consolidatedUserPlates[p] = { pointsEarned: newPlates[p].pointsEarned || 1, source: 'new', time: newPlates[p].timestamp || 0 };
+                    let wasFirst = (newPlates[p].isFirst === true) || (newPlates[p].pointsEarned && newPlates[p].pointsEarned % 2 === 0);
+                    consolidatedUserPlates[p] = { 
+                        pointsEarned: calculateExactPoints(p, wasFirst), 
+                        source: 'new', 
+                        time: newPlates[p].timestamp || 0 
+                    };
                 }
                 const globalPlates = globalDataCache.plates || {};
                 for(let key in globalPlates) {
                     if(key.startsWith(currentPlayer + '_')) {
                         const num = key.split('_')[1];
                         if(!consolidatedUserPlates[num]) {
-                            consolidatedUserPlates[num] = { pointsEarned: 2, source: 'old', originalKey: key, time: 0 };
+                            consolidatedUserPlates[num] = { pointsEarned: calculateExactPoints(num, true), source: 'old', originalKey: key, time: 0 };
                         }
                     }
                 }
@@ -531,32 +581,36 @@
                         <span class="text-slate-900 font-black plate-font text-2xl">${plate}</span>
                     </div>
                     <div class="flex items-center gap-3">
-                        <span class="text-xs font-bold ${data.pointsEarned === 2 ? 'text-orange-500' : 'text-green-600'}">+${data.pointsEarned} pts</span>
+                        <span class="text-xs font-bold ${data.pointsEarned > 1 ? 'text-orange-500' : 'text-green-600'}">+${data.pointsEarned} pts</span>
                         <button onclick="deletePlate('${plate}')" class="bg-red-500 text-white rounded-lg w-10 h-10 flex items-center justify-center font-black active:scale-90 transition-transform">X</button>
                     </div>
                 </div>
             `).join('');
         }
 
-        function showToast(pts) {
+        function showToast(pts, isFirst, isRepeat = false) {
             const toast = document.getElementById('quick-toast');
             const text = document.getElementById('toast-text');
+            const subtext = document.getElementById('toast-subtext');
             
             toast.classList.remove('hidden', 'toast-active');
             void toast.offsetWidth; 
             
-            if(pts === 2) {
-                toast.className = "fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 px-10 py-6 rounded-full font-black text-6xl z-[9999] shadow-[0_10px_50px_rgba(249,115,22,0.8)] bg-gradient-to-r from-orange-500 to-red-500 text-white toast-active";
-                text.innerText = "+2 🔥";
-            } else if(pts === 1) {
-                toast.className = "fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 px-10 py-6 rounded-full font-black text-6xl z-[9999] shadow-[0_10px_50px_rgba(34,197,94,0.8)] bg-gradient-to-r from-green-500 to-emerald-500 text-white toast-active";
-                text.innerText = "+1 🟢";
+            if (isRepeat) {
+                toast.className = "fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 px-10 py-6 rounded-3xl font-black z-[9999] shadow-[0_10px_50px_rgba(239,68,68,0.8)] bg-red-600 text-white toast-active flex flex-col items-center justify-center";
+                text.innerText = "❌";
+                subtext.innerText = "YA LA TIENES";
+            } else if (isFirst) {
+                toast.className = "fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 px-12 py-8 rounded-3xl font-black z-[9999] shadow-[0_10px_50px_rgba(249,115,22,0.8)] bg-gradient-to-r from-orange-500 to-red-500 text-white toast-active flex flex-col items-center justify-center";
+                text.innerText = `+${pts} 🔥`;
+                subtext.innerText = "¡PRIMERO EN CAZARLA!";
             } else {
-                toast.className = "fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 px-8 py-4 rounded-full font-black text-3xl z-[9999] shadow-[0_10px_50px_rgba(239,68,68,0.8)] bg-red-600 text-white toast-active";
-                text.innerText = "REPETIDA ❌";
+                toast.className = "fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 px-12 py-8 rounded-3xl font-black z-[9999] shadow-[0_10px_50px_rgba(34,197,94,0.8)] bg-gradient-to-r from-green-500 to-emerald-500 text-white toast-active flex flex-col items-center justify-center";
+                text.innerText = `+${pts} 🟢`;
+                subtext.innerText = "Añadida al álbum";
             }
 
-            setTimeout(() => { toast.classList.add('hidden'); toast.classList.remove('toast-active'); }, 1500);
+            setTimeout(() => { toast.classList.add('hidden'); toast.classList.remove('toast-active'); }, 2000);
         }
 
         function addPlate() {
@@ -565,8 +619,9 @@
             
             if (plate.length !== 4) return;
 
+            // Si ya la tiene él mismo
             if (consolidatedUserPlates[plate]) {
-                showToast(0);
+                showToast(0, false, true);
                 input.value = "";
                 return;
             }
@@ -577,22 +632,26 @@
                 const allPlates = snap.val() || {};
                 let isBonus = true;
 
+                // Si alguien en el mundo ya la cazó
                 if (allPlates[plate] || Object.keys(allPlates).some(k => k.includes(`_${plate}`))) {
                     isBonus = false;
                 }
 
-                const pts = isBonus ? 2 : 1;
+                // Calcular puntos según la matrícula
+                const pts = calculateExactPoints(plate, isBonus);
 
+                // Si es primero, la registra en el mundo
                 if (isBonus) db.ref(`plates/${plate}`).set({ discoverer: currentPlayer, timestamp: Date.now() });
                 
+                // La guarda en su perfil con los datos correctos
                 db.ref(`users/${currentPlayer}/my_plates/${plate}`).set({ 
                     timestamp: Date.now(),
-                    pointsEarned: pts 
+                    pointsEarned: pts,
+                    isFirst: isBonus,
+                    baseValue: getPlateBaseValue(plate)
                 });
 
-                db.ref(`users/${currentPlayer}/points`).transaction(p => (p || 0) + pts);
-                
-                showToast(pts);
+                showToast(pts, isBonus, false);
                 input.value = "";
                 input.disabled = false;
                 input.focus();
@@ -604,11 +663,6 @@
             if(!plateData) return;
 
             if(!confirm(`¿Borrar la matrícula ${plate}? Perderás ${plateData.pointsEarned} puntos.`)) return;
-
-            db.ref(`users/${currentPlayer}/points`).transaction(p => {
-                let current = p || 0;
-                return (current - plateData.pointsEarned < 0) ? 0 : current - plateData.pointsEarned;
-            });
 
             if(plateData.source === 'new') {
                 db.ref(`users/${currentPlayer}/my_plates/${plate}`).remove();
