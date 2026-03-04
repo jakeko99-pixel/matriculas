@@ -24,11 +24,14 @@
 </head>
 <body class="flex flex-col h-screen w-screen overflow-hidden">
 
-    <div id="splash" onclick="closeSplash()" class="fixed inset-0 z-[1000] bg-slate-950 flex flex-col items-center justify-center transition-opacity duration-500 cursor-pointer">
-        <img src="https://raw.githubusercontent.com/jakeko99-pixel/matriculas/main/icono.png" class="w-64 h-64 object-contain animate-pulse mb-8 drop-shadow-[0_0_25px_rgba(250,204,21,0.3)]">
-        <h1 class="text-3xl font-black text-yellow-400 italic tracking-tighter">EL COLECCIONISTA</h1>
-        <p class="text-slate-500 text-xs tracking-[0.4em] uppercase mt-2">De Matrículas</p>
-        <p class="mt-12 text-slate-400 text-sm animate-bounce font-bold bg-slate-900 px-6 py-2 rounded-full">Toca para empezar</p>
+    <div id="splash" onclick="closeSplash()" class="fixed inset-0 z-[1000] bg-slate-950 transition-opacity duration-500 cursor-pointer overflow-hidden p-6 flex flex-col">
+        <img src="https://raw.githubusercontent.com/jakeko99-pixel/matriculas/main/icono.png" class="absolute inset-0 w-full h-full object-contain animate-pulse drop-shadow-[0_0_25px_rgba(250,204,21,0.3)]">
+        
+        <div class="absolute bottom-16 left-0 right-0 text-center space-y-2 z-10 px-6">
+            <h1 class="text-3xl font-black text-yellow-400 italic tracking-tighter bg-slate-950/60 inline-block p-1 rounded">EL COLECCIONISTA</h1>
+            <p class="text-slate-500 text-xs tracking-[0.4em] uppercase bg-slate-950/60 inline-block p-1 rounded">De Matrículas</p>
+            <p class="mt-8 text-slate-400 text-sm animate-bounce font-bold bg-slate-900 px-6 py-2 rounded-full inline-block">Toca para empezar</p>
+        </div>
     </div>
 
     <div id="login-screen" class="hidden fixed inset-0 flex flex-col items-center justify-center bg-slate-950 z-[500] p-6">
