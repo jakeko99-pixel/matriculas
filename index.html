@@ -18,7 +18,7 @@
             80% { transform: translate(-50%, -50%); opacity: 1; scale: 1; }
             100% { transform: translate(-50%, -90%); opacity: 0; }
         }
-        .toast-active { animation: fadeUpOut 2s forwards; display: flex !important; }
+        .toast-active { animation: fadeUpOut 2.5s forwards; display: flex !important; }
     </style>
 </head>
 <body class="flex flex-col h-[100dvh] w-full overflow-hidden">
@@ -69,7 +69,7 @@
 
     <div id="stats-modal" class="hidden fixed inset-0 bg-slate-950 z-[600] flex flex-col">
         <div class="p-6 bg-slate-900 border-b border-slate-800 flex justify-between items-center">
-            <h2 class="text-xl font-black text-yellow-400">Tu Álbum y Ranking</h2>
+            <h2 class="text-xl font-black text-yellow-400">Ranking y Estadísticas</h2>
             <button onclick="closeStats()" class="bg-slate-800 text-white px-4 py-2 rounded-lg font-bold">Cerrar</button>
         </div>
         <div class="flex-1 overflow-y-auto p-6 space-y-6" id="stats-content">
@@ -123,7 +123,7 @@
 
         <div id="quick-toast" class="hidden fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 px-8 py-4 rounded-3xl font-black text-center z-[9999] shadow-[0_20px_50px_rgba(0,0,0,0.9)] pointer-events-none flex-col items-center gap-2 justify-center">
             <span id="toast-text" class="text-5xl"></span>
-            <span id="toast-subtext" class="text-xl text-white/90"></span>
+            <span id="toast-subtext" class="text-lg text-white/90"></span>
         </div>
 
         <main class="flex-1 flex flex-col items-center justify-start pt-16 sm:pt-24 p-6 relative w-full overflow-y-auto">
@@ -151,12 +151,17 @@
             <div id="recent-list" class="flex-1 overflow-y-auto p-4 space-y-2 bg-slate-900"></div>
         </div>
 
-        <footer class="bg-slate-950 p-4 pb-10 border-t border-slate-800 grid grid-cols-2 gap-4 z-30 shrink-0">
-            <button onclick="toggleRecent()" class="bg-slate-900 border border-slate-700 py-5 rounded-2xl font-black text-base text-slate-300 flex items-center justify-center gap-2 active:bg-slate-800 shadow-lg">
-                <span>⏱️</span> Últimas Cazadas
-            </button>
-            <button onclick="openStats()" class="bg-slate-900 border border-slate-700 py-5 rounded-2xl font-black text-base text-slate-300 flex items-center justify-center gap-2 active:bg-slate-800 shadow-lg">
-                <span>📊</span> Álbum y Ranking
+        <footer class="bg-slate-950 p-4 pb-8 border-t border-slate-800 flex flex-col gap-3 z-30 shrink-0">
+            <div class="grid grid-cols-2 gap-3">
+                <button onclick="toggleRecent()" class="bg-slate-900 border border-slate-700 py-4 rounded-2xl font-black text-sm text-slate-300 flex flex-col items-center justify-center gap-1 active:bg-slate-800 shadow-lg">
+                    <span class="text-xl">⏱️</span> Últimas Cazadas
+                </button>
+                <button onclick="openUniverse(currentPlayer)" class="bg-slate-900 border border-slate-700 py-4 rounded-2xl font-black text-sm text-yellow-400 flex flex-col items-center justify-center gap-1 active:bg-slate-800 shadow-lg border-b-2 border-b-yellow-500/50">
+                    <span class="text-xl">📖</span> Mi Álbum
+                </button>
+            </div>
+            <button onclick="openStats()" class="bg-slate-900 border border-slate-700 py-4 rounded-2xl font-black text-base text-white flex items-center justify-center gap-2 active:bg-slate-800 shadow-lg">
+                <span>🏆</span> Ranking General
             </button>
         </footer>
     </div>
@@ -171,7 +176,7 @@
         let globalDataCache = {};
         window.currentModalData = { NOA: {}, ERIK: {}, FER: {}, GLOBAL: [] };
         
-        let currentUniverseScope = 'GLOBAL'; // Nueva variable para saber si estamos viendo el álbum global o individual
+        let currentUniverseScope = 'GLOBAL';
 
         const defaultAvatars = {
             'NOA': 'https://github.com/jakeko99-pixel/matriculas/blob/main/Noa%20Lodres%20Juego.jpeg?raw=true',
@@ -218,7 +223,6 @@
         function openStats() { document.getElementById('stats-modal').classList.remove('hidden'); renderStats(); }
         function closeStats() { document.getElementById('stats-modal').classList.add('hidden'); }
 
-        // --- LÓGICA DE BLOQUES MODIFICADA PARA PERMITIR INDIVIDUAL O GLOBAL ---
         function openUniverse(scope) {
             currentUniverseScope = scope || 'GLOBAL';
             const plates = currentUniverseScope === 'GLOBAL' ? window.currentModalData.GLOBAL : (window.currentModalData[currentUniverseScope]?.aportadas || []);
@@ -226,7 +230,6 @@
             document.getElementById('universe-title').innerText = currentUniverseScope === 'GLOBAL' ? "Misión Familiar" : `Álbum de ${currentUniverseScope}`;
 
             let content = '';
-            
             for(let i=0; i<10; i++) {
                 let prefix = i.toString();
                 let count = plates.filter(p => p.startsWith(prefix)).length;
@@ -277,7 +280,6 @@
         }
 
         function renderThousandContent() {
-            // Usa las matrículas globales O las individuales, según lo que hayamos tocado
             const plates = currentUniverseScope === 'GLOBAL' ? window.currentModalData.GLOBAL : (window.currentModalData[currentUniverseScope]?.aportadas || []);
             const prefix = currentThousandDigit.toString();
             
@@ -347,7 +349,7 @@
         }
         function closeDetails() { document.getElementById('details-modal').classList.add('hidden'); }
 
-        // --- RENDERIZADO PRINCIPAL DE ESTADÍSTICAS (AÑADIDO ÁLBUM INDIVIDUAL) ---
+        // --- RENDERIZADO PRINCIPAL DE ESTADÍSTICAS (RESTAURADO AL ORIGINAL) ---
         function renderStats() {
             const content = document.getElementById('stats-content');
             if(!globalDataCache.users) { content.innerHTML = '<p>Cargando datos...</p>'; return; }
@@ -363,38 +365,23 @@
             
             window.currentModalData.GLOBAL = Array.from(allUniquePlates);
 
-            // Cálculos Globales
             let totalWorld = window.currentModalData.GLOBAL.length;
             let missingWorld = 10000 - totalWorld;
             let pctWorld = ((totalWorld / 10000) * 100).toFixed(2);
 
-            // Cálculos Individuales (del jugador actual)
-            let myPlatesCount = window.currentModalData[currentPlayer]?.aportadas?.length || 0;
-            let myMissing = 10000 - myPlatesCount;
-            let myPct = ((myPlatesCount / 10000) * 100).toFixed(2);
-
             let html = `
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div onclick="openUniverse('${currentPlayer}')" class="bg-slate-800 p-5 rounded-2xl border border-yellow-500/50 text-center shadow-lg cursor-pointer active:scale-95 transition-transform">
-                        <h3 class="text-yellow-400 text-xs font-black tracking-widest uppercase mb-2">Mi Álbum Personal</h3>
-                        <div class="text-3xl font-black text-white mb-2">${myPlatesCount} <span class="text-base text-slate-400">/ 10000</span></div>
-                        <div class="h-2 bg-slate-900 rounded-full w-full overflow-hidden mb-2">
-                            <div class="h-full bg-yellow-400" style="width: ${myPct}%"></div>
-                        </div>
-                        <p class="text-[10px] text-slate-400">Te faltan <span class="text-white font-bold">${myMissing}</span></p>
+                <div onclick="openUniverse('GLOBAL')" class="bg-slate-900 p-6 rounded-3xl border border-slate-800 text-center shadow-lg mb-6 cursor-pointer active:scale-95 transition-transform relative overflow-hidden">
+                    <h3 class="text-slate-400 text-sm font-black tracking-widest uppercase mb-2">Misión Familiar</h3>
+                    <div class="text-5xl font-black text-white mb-2">${totalWorld} <span class="text-xl text-slate-500">/ 10000</span></div>
+                    
+                    <div class="h-3 bg-slate-950 rounded-full w-full overflow-hidden mb-3 border border-slate-800">
+                        <div class="h-full bg-yellow-400" style="width: ${pctWorld}%"></div>
                     </div>
-
-                    <div onclick="openUniverse('GLOBAL')" class="bg-slate-900 p-5 rounded-2xl border border-slate-700 text-center shadow-lg cursor-pointer active:scale-95 transition-transform">
-                        <h3 class="text-slate-400 text-xs font-black tracking-widest uppercase mb-2">Misión Familiar</h3>
-                        <div class="text-3xl font-black text-slate-300 mb-2">${totalWorld} <span class="text-base text-slate-600">/ 10000</span></div>
-                        <div class="h-2 bg-slate-950 rounded-full w-full overflow-hidden mb-2">
-                            <div class="h-full bg-slate-500" style="width: ${pctWorld}%"></div>
-                        </div>
-                        <p class="text-[10px] text-slate-500">Nos faltan <span class="text-slate-300 font-bold">${missingWorld}</span></p>
-                    </div>
+                    
+                    <p class="text-xs text-slate-500">Nos faltan <span class="text-slate-300 font-bold">${missingWorld}</span> para completar el universo.</p>
                 </div>
 
-                <h3 class="text-white font-black text-xl mt-6 mb-2 flex items-center gap-2">🏆 Ranking Detallado</h3>
+                <h3 class="text-white font-black text-xl mb-4 flex items-center gap-2">🏆 Ranking Detallado</h3>
             `;
 
             let playersStats = [];
@@ -501,45 +488,75 @@
             content.innerHTML = html;
         }
 
-        // --- INICIALIZACIÓN Y CAZA ---
+        // --- CÁLCULO DE PUNTOS GLOBALES EN VIVO ---
+        const calculateUserLivePoints = (playerName) => {
+            let truePoints = 0;
+            let arrAportadas = [];
+            const pData = globalDataCache.users[playerName] || {};
+            const myPlates = pData.my_plates || {};
+            const globalPlates = globalDataCache.plates || {};
+
+            for(let p in myPlates) {
+                if(!arrAportadas.includes(p)) {
+                    arrAportadas.push(p);
+                    let wasFirst = (myPlates[p].isFirst === true) || (myPlates[p].pointsEarned && myPlates[p].pointsEarned % 2 === 0);
+                    truePoints += calculateExactPoints(p, wasFirst);
+                }
+            }
+            for(let key in globalPlates) {
+                if(key.startsWith(playerName + '_')) {
+                    let num = key.split('_')[1];
+                    if(!arrAportadas.includes(num)) {
+                        arrAportadas.push(num);
+                        truePoints += calculateExactPoints(num, true); 
+                    }
+                }
+            }
+            return truePoints;
+        };
+
+        // --- ACTUALIZACIÓN DE UI DEL JUGADOR ACTUAL ---
+        function updateCurrentPlayerUI() {
+            if(!currentPlayer || !globalDataCache || !globalDataCache.users) return;
+
+            document.getElementById('user-points').innerText = calculateUserLivePoints(currentPlayer);
+
+            consolidatedUserPlates = {};
+            const newPlates = globalDataCache.users[currentPlayer]?.my_plates || {};
+            for(let p in newPlates) {
+                let wasFirst = (newPlates[p].isFirst === true) || (newPlates[p].pointsEarned && newPlates[p].pointsEarned % 2 === 0);
+                consolidatedUserPlates[p] = { 
+                    pointsEarned: calculateExactPoints(p, wasFirst), 
+                    source: 'new', 
+                    time: newPlates[p].timestamp || 0 
+                };
+            }
+            const globalPlates = globalDataCache.plates || {};
+            for(let key in globalPlates) {
+                if(key.startsWith(currentPlayer + '_')) {
+                    const num = key.split('_')[1];
+                    if(!consolidatedUserPlates[num]) {
+                        consolidatedUserPlates[num] = { pointsEarned: calculateExactPoints(num, true), source: 'old', originalKey: key, time: 0 };
+                    }
+                }
+            }
+            renderRecentPlates();
+        }
+
         function selectPlayer(name) {
             currentPlayer = name;
             document.getElementById('login-screen').classList.add('hidden');
             document.getElementById('main-app').classList.remove('hidden');
             document.getElementById('current-name').innerText = name;
             document.getElementById('current-avatar').src = defaultAvatars[name];
-            // ELIMINADO: setTimeout(() => document.getElementById('plate-input').focus(), 300); -> Adiós al auto-teclado
+            
+            // Forzar actualización inmediata de puntos y listado de recientes
+            updateCurrentPlayerUI();
         }
 
         db.ref().on('value', (snap) => {
             globalDataCache = snap.val() || { users: {}, plates: {} };
             
-            const calculateUserLivePoints = (playerName) => {
-                let truePoints = 0;
-                let arrAportadas = [];
-                const pData = globalDataCache.users[playerName] || {};
-                const myPlates = pData.my_plates || {};
-                const globalPlates = globalDataCache.plates || {};
-
-                for(let p in myPlates) {
-                    if(!arrAportadas.includes(p)) {
-                        arrAportadas.push(p);
-                        let wasFirst = (myPlates[p].isFirst === true) || (myPlates[p].pointsEarned && myPlates[p].pointsEarned % 2 === 0);
-                        truePoints += calculateExactPoints(p, wasFirst);
-                    }
-                }
-                for(let key in globalPlates) {
-                    if(key.startsWith(playerName + '_')) {
-                        let num = key.split('_')[1];
-                        if(!arrAportadas.includes(num)) {
-                            arrAportadas.push(num);
-                            truePoints += calculateExactPoints(num, true); 
-                        }
-                    }
-                }
-                return truePoints;
-            };
-
             if(globalDataCache.users) {
                 ['NOA', 'ERIK', 'FER'].forEach(name => {
                     const levelElement = document.getElementById(`level-${name}`);
@@ -548,28 +565,7 @@
             }
 
             if(currentPlayer) {
-                document.getElementById('user-points').innerText = calculateUserLivePoints(currentPlayer);
-
-                consolidatedUserPlates = {};
-                const newPlates = globalDataCache.users[currentPlayer]?.my_plates || {};
-                for(let p in newPlates) {
-                    let wasFirst = (newPlates[p].isFirst === true) || (newPlates[p].pointsEarned && newPlates[p].pointsEarned % 2 === 0);
-                    consolidatedUserPlates[p] = { 
-                        pointsEarned: calculateExactPoints(p, wasFirst), 
-                        source: 'new', 
-                        time: newPlates[p].timestamp || 0 
-                    };
-                }
-                const globalPlates = globalDataCache.plates || {};
-                for(let key in globalPlates) {
-                    if(key.startsWith(currentPlayer + '_')) {
-                        const num = key.split('_')[1];
-                        if(!consolidatedUserPlates[num]) {
-                            consolidatedUserPlates[num] = { pointsEarned: calculateExactPoints(num, true), source: 'old', originalKey: key, time: 0 };
-                        }
-                    }
-                }
-                renderRecentPlates();
+                updateCurrentPlayerUI();
             }
             if(!document.getElementById('stats-modal').classList.contains('hidden')) renderStats();
         });
@@ -605,7 +601,7 @@
             `).join('');
         }
 
-        function showToast(pts, isFirst, isRepeat = false) {
+        function showToast(plate, pts, isFirst, isRepeat = false) {
             const toast = document.getElementById('quick-toast');
             const text = document.getElementById('toast-text');
             const subtext = document.getElementById('toast-subtext');
@@ -613,6 +609,11 @@
             toast.classList.remove('hidden', 'toast-active');
             void toast.offsetWidth; 
             
+            let specialLabel = "";
+            if (isPoker(plate)) specialLabel = "¡PÓKER!";
+            else if (isEscoba(plate)) specialLabel = "¡ESCOBA!";
+            else if (isCapicua(plate)) specialLabel = "¡CAPICÚA!";
+
             if (isRepeat) {
                 toast.className = "fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 px-10 py-6 rounded-3xl font-black z-[9999] shadow-[0_10px_50px_rgba(239,68,68,0.8)] bg-red-600 text-white toast-active flex flex-col items-center justify-center";
                 text.innerText = "❌";
@@ -620,14 +621,14 @@
             } else if (isFirst) {
                 toast.className = "fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 px-12 py-8 rounded-3xl font-black z-[9999] shadow-[0_10px_50px_rgba(249,115,22,0.8)] bg-gradient-to-r from-orange-500 to-red-500 text-white toast-active flex flex-col items-center justify-center";
                 text.innerText = `+${pts} 🔥`;
-                subtext.innerText = "¡PRIMERO EN CAZARLA!";
+                subtext.innerText = specialLabel ? `${specialLabel} (1º en cazarla)` : "¡PRIMERO EN CAZARLA!";
             } else {
                 toast.className = "fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 px-12 py-8 rounded-3xl font-black z-[9999] shadow-[0_10px_50px_rgba(34,197,94,0.8)] bg-gradient-to-r from-green-500 to-emerald-500 text-white toast-active flex flex-col items-center justify-center";
                 text.innerText = `+${pts} 🟢`;
-                subtext.innerText = "Añadida al álbum";
+                subtext.innerText = specialLabel ? `${specialLabel}` : "Añadida al álbum";
             }
 
-            setTimeout(() => { toast.classList.add('hidden'); toast.classList.remove('toast-active'); }, 2000);
+            setTimeout(() => { toast.classList.add('hidden'); toast.classList.remove('toast-active'); }, 2500);
         }
 
         function addPlate() {
@@ -637,7 +638,7 @@
             if (plate.length !== 4) return;
 
             if (consolidatedUserPlates[plate]) {
-                showToast(0, false, true);
+                showToast(plate, 0, false, true);
                 input.value = "";
                 return;
             }
@@ -663,7 +664,7 @@
                     baseValue: getPlateBaseValue(plate)
                 });
 
-                showToast(pts, isBonus, false);
+                showToast(plate, pts, isBonus, false);
                 input.value = "";
                 input.disabled = false;
                 input.focus();
