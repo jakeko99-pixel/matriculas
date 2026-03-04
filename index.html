@@ -10,7 +10,7 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
         body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; background-color: #020617; color: white; overscroll-behavior-y: none; }
-        .plate-font { font-family: 'Courier New', Courier, monospace; letter-spacing: 6px; }
+        .plate-font { font-family: 'Courier New', Courier, monospace; letter-spacing: 2px; }
         
         @keyframes fadeUpOut {
             0% { transform: translate(-50%, -10%); opacity: 0; }
@@ -76,6 +76,39 @@
             </div>
     </div>
 
+    <div id="universe-modal" class="hidden fixed inset-0 bg-slate-950 z-[650] flex flex-col">
+        <div class="p-6 bg-slate-900 border-b border-slate-800 flex justify-between items-center">
+            <h2 class="text-xl font-black text-white">Bloques de Matrículas</h2>
+            <button onclick="closeUniverse()" class="bg-slate-800 text-white px-4 py-2 rounded-lg font-bold">Volver</button>
+        </div>
+        <div class="flex-1 overflow-y-auto p-6 grid grid-cols-1 gap-4 content-start" id="universe-content">
+            </div>
+    </div>
+
+    <div id="thousand-modal" class="hidden fixed inset-0 bg-slate-950 z-[750] flex flex-col">
+        <div class="p-6 bg-slate-900 border-b border-slate-800 flex flex-col gap-4">
+            <div class="flex justify-between items-center">
+                <h2 id="thousand-title" class="text-2xl font-black text-yellow-400 tracking-widest">0000 - 0999</h2>
+                <button onclick="closeThousand()" class="bg-slate-800 text-white px-4 py-2 rounded-lg font-bold">Atrás</button>
+            </div>
+            <div class="flex bg-slate-950 rounded-lg p-1 border border-slate-800">
+                <button id="tab-collected" onclick="switchThousandTab('collected')" class="flex-1 py-3 text-sm font-bold rounded-md bg-yellow-400 text-slate-900 transition-all">Conseguidas (<span id="count-collected">0</span>)</button>
+                <button id="tab-missing" onclick="switchThousandTab('missing')" class="flex-1 py-3 text-sm font-bold rounded-md text-slate-400 transition-all">Faltan (<span id="count-missing">0</span>)</button>
+            </div>
+        </div>
+        <div class="flex-1 overflow-y-auto p-4 bg-slate-950" id="thousand-content">
+            </div>
+    </div>
+
+    <div id="details-modal" class="hidden fixed inset-0 bg-slate-950 z-[700] flex flex-col">
+        <div class="p-6 bg-slate-900 border-b border-slate-800 flex justify-between items-center">
+            <h2 id="details-title" class="text-lg font-black text-white uppercase tracking-wide">Detalles</h2>
+            <button onclick="closeDetails()" class="bg-slate-800 text-white px-4 py-2 rounded-lg font-bold">Volver</button>
+        </div>
+        <div class="flex-1 overflow-y-auto p-4 bg-slate-950" id="details-content">
+            </div>
+    </div>
+
     <div id="main-app" class="hidden flex-1 flex flex-col relative">
         <header class="bg-slate-900 p-4 border-b border-slate-800 flex justify-between items-center shadow-md">
             <div class="flex items-center gap-3">
@@ -84,7 +117,7 @@
             </div>
             <div class="text-right">
                 <span id="user-points" class="text-3xl font-black text-yellow-400 leading-none">0</span>
-                <span class="text-[9px] text-slate-400 uppercase font-bold block">Puntos</span>
+                <span class="text-[9px] text-slate-400 uppercase font-bold block">Puntos Reales</span>
             </div>
         </header>
 
@@ -136,6 +169,9 @@
         let consolidatedUserPlates = {}; 
         let globalDataCache = {};
         
+        // Almacenamos los datos para poder navegar por ellos sin bloqueos
+        window.currentModalData = { NOA: {}, ERIK: {}, FER: {}, GLOBAL: [] };
+        
         const defaultAvatars = {
             'NOA': 'https://github.com/jakeko99-pixel/matriculas/blob/main/Noa%20Lodres%20Juego.jpeg?raw=true',
             'ERIK': 'https://github.com/jakeko99-pixel/matriculas/blob/main/Erik%20Juego.png?raw=true',
@@ -162,15 +198,138 @@
 
         function isCapicua(str) { return str.length === 4 && str[0] === str[3] && str[1] === str[2]; }
         function isEscoba(str) { return str.length === 4 && (parseInt(str[0]) + parseInt(str[1]) + parseInt(str[2]) + parseInt(str[3]) === 15); }
+        function isPoker(str) { return str.length === 4 && str[0] === str[1] && str[1] === str[2] && str[2] === str[3]; }
 
-        function openStats() {
-            document.getElementById('stats-modal').classList.remove('hidden');
-            renderStats();
+        function openStats() { document.getElementById('stats-modal').classList.remove('hidden'); renderStats(); }
+        function closeStats() { document.getElementById('stats-modal').classList.add('hidden'); }
+
+        // --- LÓGICA DE BLOQUES (MILLARES) ---
+        function openUniverse() {
+            const globalPlates = window.currentModalData.GLOBAL || [];
+            let content = '';
+            
+            for(let i=0; i<10; i++) {
+                let prefix = i.toString();
+                let count = globalPlates.filter(p => p.startsWith(prefix)).length;
+                let pct = (count / 1000) * 100;
+                
+                content += `
+                    <button onclick="openThousand(${i})" class="bg-slate-800 p-5 rounded-2xl border border-slate-700 active:border-yellow-400 text-left relative overflow-hidden flex justify-between items-center shadow-md">
+                        <div class="relative z-10">
+                            <span class="text-xl font-black text-white block mb-1">Empiezan por ${i}</span>
+                            <span class="text-[10px] text-slate-400 font-bold uppercase tracking-widest bg-slate-900 px-2 py-1 rounded border border-slate-700">${count} / 1000 capturadas</span>
+                        </div>
+                        <span class="text-2xl z-10 bg-slate-900 w-10 h-10 flex items-center justify-center rounded-full border border-slate-700 text-yellow-400">➔</span>
+                        <div class="absolute left-0 bottom-0 h-1.5 bg-yellow-400 transition-all" style="width: ${pct}%"></div>
+                    </button>
+                `;
+            }
+            document.getElementById('universe-content').innerHTML = content;
+            document.getElementById('universe-modal').classList.remove('hidden');
         }
-        function closeStats() {
-            document.getElementById('stats-modal').classList.add('hidden');
+        function closeUniverse() { document.getElementById('universe-modal').classList.add('hidden'); }
+
+        // --- LÓGICA DE PESTAÑAS (DENTRO DEL MILLAR) ---
+        let currentThousandDigit = 0;
+        let currentThousandTab = 'collected';
+
+        function openThousand(digit) {
+            currentThousandDigit = digit;
+            currentThousandTab = 'collected'; 
+            
+            document.getElementById('thousand-title').innerText = `${digit}000 - ${digit}999`;
+            document.getElementById('tab-collected').className = "flex-1 py-3 text-sm font-bold rounded-md bg-yellow-400 text-slate-900 transition-all";
+            document.getElementById('tab-missing').className = "flex-1 py-3 text-sm font-bold rounded-md text-slate-400 transition-all";
+            
+            document.getElementById('thousand-modal').classList.remove('hidden');
+            renderThousandContent();
+        }
+        function closeThousand() { document.getElementById('thousand-modal').classList.add('hidden'); }
+
+        function switchThousandTab(tab) {
+            currentThousandTab = tab;
+            if(tab === 'collected') {
+                document.getElementById('tab-collected').className = "flex-1 py-3 text-sm font-bold rounded-md bg-yellow-400 text-slate-900 transition-all shadow-md";
+                document.getElementById('tab-missing').className = "flex-1 py-3 text-sm font-bold rounded-md text-slate-400 transition-all";
+            } else {
+                document.getElementById('tab-missing').className = "flex-1 py-3 text-sm font-bold rounded-md bg-slate-800 text-red-400 transition-all shadow-md border border-slate-700";
+                document.getElementById('tab-collected').className = "flex-1 py-3 text-sm font-bold rounded-md text-slate-400 transition-all";
+            }
+            renderThousandContent();
         }
 
+        function renderThousandContent() {
+            const globalPlates = window.currentModalData.GLOBAL || [];
+            const prefix = currentThousandDigit.toString();
+            
+            let collected = globalPlates.filter(p => p.startsWith(prefix)).sort((a,b) => parseInt(a)-parseInt(b));
+            
+            document.getElementById('count-collected').innerText = collected.length;
+            document.getElementById('count-missing').innerText = 1000 - collected.length;
+
+            let html = '<div class="grid grid-cols-3 gap-2">'; 
+            
+            if (currentThousandTab === 'collected') {
+                if(collected.length === 0) {
+                    document.getElementById('thousand-content').innerHTML = '<div class="text-center mt-10"><span class="text-4xl mb-4 block">👻</span><p class="text-slate-500 font-bold">Aún no hay matrículas cazadas en este bloque.</p></div>';
+                    return;
+                }
+                collected.forEach(p => {
+                    html += `
+                        <div class="bg-slate-800 rounded-lg flex items-center shadow-md border border-slate-700 justify-center p-2 py-3">
+                            <span class="text-white font-black plate-font text-base tracking-widest">${p}</span>
+                        </div>
+                    `;
+                });
+            } else {
+                let collectedSet = new Set(collected);
+                let missingCount = 0;
+                for(let i=0; i<=999; i++) {
+                    let numStr = prefix + i.toString().padStart(3, '0');
+                    if(!collectedSet.has(numStr)) {
+                        missingCount++;
+                        html += `
+                            <div class="bg-slate-950 rounded-lg flex items-center border border-red-900/30 justify-center p-2 py-3 opacity-60">
+                                <span class="text-red-500 font-black plate-font text-base tracking-widest">${numStr}</span>
+                            </div>
+                        `;
+                    }
+                }
+                if(missingCount === 0) {
+                    document.getElementById('thousand-content').innerHTML = '<div class="text-center mt-10"><span class="text-5xl mb-4 block">🏆</span><p class="text-yellow-400 font-black text-xl">¡BLOQUE COMPLETADO!</p></div>';
+                    return;
+                }
+            }
+            html += '</div>';
+            document.getElementById('thousand-content').innerHTML = html;
+        }
+
+        // --- LÓGICA DE DETALLES DEL JUGADOR (El resto de modales) ---
+        function showDetails(title, dataKey, subKey) {
+            document.getElementById('details-title').innerText = title;
+            const content = document.getElementById('details-content');
+            let platesArray = window.currentModalData[dataKey][subKey] || [];
+
+            if (platesArray.length === 0) {
+                content.innerHTML = '<p class="text-slate-500 text-center mt-10">Todavía no hay matrículas aquí.</p>';
+            } else {
+                platesArray.sort((a, b) => parseInt(a) - parseInt(b));
+                let html = '<div class="grid grid-cols-3 gap-2">';
+                platesArray.forEach(p => {
+                    html += `
+                        <div class="bg-slate-800 rounded-lg flex items-center shadow-sm border border-slate-700 justify-center p-2 py-3">
+                            <span class="text-white font-black plate-font text-base tracking-widest">${p}</span>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+                content.innerHTML = html;
+            }
+            document.getElementById('details-modal').classList.remove('hidden');
+        }
+        function closeDetails() { document.getElementById('details-modal').classList.add('hidden'); }
+
+        // --- RENDERIZADO PRINCIPAL DE ESTADÍSTICAS ---
         function renderStats() {
             const content = document.getElementById('stats-content');
             if(!globalDataCache.users) { content.innerHTML = '<p>Cargando datos...</p>'; return; }
@@ -187,10 +346,12 @@
             let totalWorld = allUniquePlates.size;
             let missing = 10000 - totalWorld;
             let percentage = ((totalWorld / 10000) * 100).toFixed(2);
+            
+            window.currentModalData.GLOBAL = Array.from(allUniquePlates);
 
             let html = `
-                <div class="bg-slate-950 p-5 rounded-2xl border border-slate-800 text-center shadow-lg">
-                    <h3 class="text-slate-400 text-xs font-black tracking-widest uppercase mb-2">Misión Familiar</h3>
+                <div onclick="openUniverse()" class="bg-slate-950 p-5 rounded-2xl border border-slate-800 text-center shadow-lg cursor-pointer active:scale-95 transition-transform">
+                    <h3 class="text-slate-400 text-xs font-black tracking-widest uppercase mb-2">Misión Familiar (Toca para explorar)</h3>
                     <div class="text-4xl font-black text-yellow-400 mb-2">${totalWorld} <span class="text-lg text-slate-500">/ 10000</span></div>
                     <div class="h-2 bg-slate-900 rounded-full w-full overflow-hidden mb-2">
                         <div class="h-full bg-yellow-400" style="width: ${percentage}%"></div>
@@ -203,30 +364,51 @@
             let playersStats = [];
             for(let playerName of ['NOA', 'ERIK', 'FER']) {
                 let pData = users[playerName] || {};
-                let platesCount = 0;
-                let capicuas = 0;
-                let escobas = 0;
+                let myPlates = pData.my_plates || {};
+                
+                let arrAportadas = [];
+                let arrCapicuas = [];
+                let arrEscobas = [];
+                let arrPokers = [];
+                let truePoints = 0; 
 
-                for(let p in pData.my_plates || {}) {
-                    platesCount++;
-                    if(isCapicua(p)) capicuas++;
-                    if(isEscoba(p)) escobas++;
+                for(let p in myPlates) {
+                    if(!arrAportadas.includes(p)) {
+                        arrAportadas.push(p);
+                        truePoints += (myPlates[p].pointsEarned || 1);
+                        if(isCapicua(p)) arrCapicuas.push(p);
+                        if(isEscoba(p)) arrEscobas.push(p);
+                        if(isPoker(p)) arrPokers.push(p);
+                    }
                 }
+                
                 for(let key in globalPlates) {
                     if(key.startsWith(playerName + '_')) {
                         let num = key.split('_')[1];
-                        platesCount++;
-                        if(isCapicua(num)) capicuas++;
-                        if(isEscoba(num)) escobas++;
+                        if(!arrAportadas.includes(num)) {
+                            arrAportadas.push(num);
+                            truePoints += 2; 
+                            if(isCapicua(num)) arrCapicuas.push(num);
+                            if(isEscoba(num)) arrEscobas.push(num);
+                            if(isPoker(num)) arrPokers.push(num);
+                        }
                     }
                 }
 
+                window.currentModalData[playerName] = {
+                    aportadas: arrAportadas,
+                    capicuas: arrCapicuas,
+                    escobas: arrEscobas,
+                    pokers: arrPokers
+                };
+
                 playersStats.push({
                     name: playerName,
-                    points: pData.points || 0,
-                    totalPlates: platesCount,
-                    capicuas: capicuas,
-                    escobas: escobas
+                    points: truePoints, 
+                    totalPlates: arrAportadas.length,
+                    capicuas: arrCapicuas.length,
+                    escobas: arrEscobas.length,
+                    pokers: arrPokers.length
                 });
             }
 
@@ -234,10 +416,10 @@
 
             playersStats.forEach((p, index) => {
                 let badge = index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉';
-                let rankLevel = getLevel(p.points); // Aquí también mostramos el nivel en el ranking de paso
+                let rankLevel = getLevel(p.points); 
                 
                 html += `
-                    <div class="bg-slate-800 rounded-2xl p-4 flex flex-col gap-3 border border-slate-700">
+                    <div class="bg-slate-800 rounded-2xl p-4 flex flex-col gap-3 border border-slate-700 shadow-md">
                         <div class="flex justify-between items-center border-b border-slate-700 pb-3">
                             <div class="flex items-center gap-3">
                                 <span class="text-2xl">${badge}</span>
@@ -249,21 +431,25 @@
                             </div>
                             <div class="text-right">
                                 <span class="text-2xl font-black text-yellow-400 leading-none block">${p.points}</span>
-                                <span class="text-[9px] text-slate-400 uppercase font-bold">Puntos</span>
+                                <span class="text-[9px] text-slate-400 uppercase font-bold">Pts Reales</span>
                             </div>
                         </div>
-                        <div class="grid grid-cols-3 gap-2 text-center">
-                            <div class="bg-slate-900 rounded-lg p-2">
-                                <span class="block text-xs text-slate-400">Aportadas</span>
+                        <div class="grid grid-cols-4 gap-2 text-center">
+                            <div onclick="showDetails('Aportadas de ${p.name}', '${p.name}', 'aportadas')" class="bg-slate-900 rounded-lg p-2 cursor-pointer active:scale-95 border border-slate-800 hover:border-slate-500 transition-transform">
+                                <span class="block text-[9px] text-slate-400 uppercase tracking-wider mb-1">Todas</span>
                                 <span class="font-bold text-white">${p.totalPlates}</span>
                             </div>
-                            <div class="bg-slate-900 rounded-lg p-2">
-                                <span class="block text-xs text-slate-400">Capicúas</span>
+                            <div onclick="showDetails('Capicúas de ${p.name}', '${p.name}', 'capicuas')" class="bg-slate-900 rounded-lg p-2 cursor-pointer active:scale-95 border border-slate-800 hover:border-slate-500 transition-transform">
+                                <span class="block text-[9px] text-slate-400 uppercase tracking-wider mb-1">Capicúa</span>
                                 <span class="font-bold text-pink-400">${p.capicuas}</span>
                             </div>
-                            <div class="bg-slate-900 rounded-lg p-2">
-                                <span class="block text-xs text-slate-400">Escobas</span>
+                            <div onclick="showDetails('Escobas de ${p.name}', '${p.name}', 'escobas')" class="bg-slate-900 rounded-lg p-2 cursor-pointer active:scale-95 border border-slate-800 hover:border-slate-500 transition-transform">
+                                <span class="block text-[9px] text-slate-400 uppercase tracking-wider mb-1">Escoba</span>
                                 <span class="font-bold text-blue-400">${p.escobas}</span>
+                            </div>
+                            <div onclick="showDetails('Póker de ${p.name}', '${p.name}', 'pokers')" class="bg-slate-900 rounded-lg p-2 cursor-pointer active:scale-95 border border-slate-800 hover:border-slate-500 transition-transform">
+                                <span class="block text-[9px] text-slate-400 uppercase tracking-wider mb-1">Póker</span>
+                                <span class="font-bold text-yellow-400">${p.pokers}</span>
                             </div>
                         </div>
                     </div>
@@ -273,6 +459,7 @@
             content.innerHTML = html;
         }
 
+        // --- INICIALIZACIÓN Y CAZA DE MATRÍCULAS ---
         function selectPlayer(name) {
             currentPlayer = name;
             document.getElementById('login-screen').classList.add('hidden');
@@ -287,18 +474,22 @@
             
             if(globalDataCache.users) {
                 ['NOA', 'ERIK', 'FER'].forEach(name => {
-                    const pts = globalDataCache.users[name]?.points || 0;
+                    let pts = 0;
+                    const myPlates = globalDataCache.users[name]?.my_plates || {};
+                    for(let p in myPlates) { pts += (myPlates[p].pointsEarned || 1); }
+                    
                     const levelElement = document.getElementById(`level-${name}`);
                     if(levelElement) levelElement.innerText = getLevel(pts);
                 });
             }
 
             if(currentPlayer) {
-                const myPoints = globalDataCache.users[currentPlayer]?.points || 0;
-                document.getElementById('user-points').innerText = myPoints;
+                let livePoints = 0;
+                const newPlates = globalDataCache.users[currentPlayer]?.my_plates || {};
+                for(let p in newPlates) { livePoints += (newPlates[p].pointsEarned || 1); }
+                document.getElementById('user-points').innerText = livePoints;
 
                 consolidatedUserPlates = {};
-                const newPlates = globalDataCache.users[currentPlayer]?.my_plates || {};
                 for(let p in newPlates) {
                     consolidatedUserPlates[p] = { pointsEarned: newPlates[p].pointsEarned || 1, source: 'new', time: newPlates[p].timestamp || 0 };
                 }
@@ -307,7 +498,7 @@
                     if(key.startsWith(currentPlayer + '_')) {
                         const num = key.split('_')[1];
                         if(!consolidatedUserPlates[num]) {
-                            consolidatedUserPlates[num] = { pointsEarned: 1, source: 'old', originalKey: key, time: 0 };
+                            consolidatedUserPlates[num] = { pointsEarned: 2, source: 'old', originalKey: key, time: 0 };
                         }
                     }
                 }
@@ -318,11 +509,8 @@
 
         function toggleRecent() {
             const panel = document.getElementById('recent-panel');
-            if(panel.classList.contains('translate-y-full')) {
-                panel.classList.remove('translate-y-full');
-            } else {
-                panel.classList.add('translate-y-full');
-            }
+            if(panel.classList.contains('translate-y-full')) { panel.classList.remove('translate-y-full'); } 
+            else { panel.classList.add('translate-y-full'); }
         }
 
         function renderRecentPlates() {
@@ -431,4 +619,3 @@
     </script>
 </body>
 </html>
-
