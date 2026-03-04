@@ -12,7 +12,6 @@
         body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; background-color: #020617; color: white; overscroll-behavior-y: none; }
         .plate-font { font-family: 'Courier New', Courier, monospace; letter-spacing: 6px; }
         
-        /* Animación limpia para el holograma de puntos */
         @keyframes fadeUpOut {
             0% { transform: translate(-50%, -10%); opacity: 0; }
             20% { transform: translate(-50%, -50%); opacity: 1; scale: 1.1; }
@@ -24,9 +23,8 @@
 </head>
 <body class="flex flex-col h-screen w-screen overflow-hidden">
 
-   <div id="splash" onclick="closeSplash()" class="fixed inset-0 z-[1000] bg-slate-950 transition-opacity duration-500 cursor-pointer overflow-hidden p-6 flex flex-col">
+    <div id="splash" onclick="closeSplash()" class="fixed inset-0 z-[1000] bg-slate-950 transition-opacity duration-500 cursor-pointer overflow-hidden p-6 flex flex-col">
         <img src="https://raw.githubusercontent.com/jakeko99-pixel/matriculas/main/icono.png" class="absolute inset-0 w-full h-full object-contain -translate-y-16 animate-pulse drop-shadow-[0_0_25px_rgba(250,204,21,0.3)]">
-        
         <div class="absolute bottom-16 left-0 right-0 text-center space-y-2 z-10 px-6">
             <h1 class="text-3xl font-black text-yellow-400 italic tracking-tighter bg-slate-950/60 inline-block p-1 rounded">EL COLECCIONISTA</h1>
             <p class="text-slate-500 text-xs tracking-[0.4em] uppercase bg-slate-950/60 inline-block p-1 rounded">De Matrículas</p>
@@ -34,17 +32,37 @@
         </div>
     </div>
 
-   <div id="splash" onclick="closeSplash()" class="fixed inset-0 z-[1000] bg-slate-950 transition-opacity duration-500 cursor-pointer overflow-hidden p-6 flex flex-col">
-        <img src="https://raw.githubusercontent.com/jakeko99-pixel/matriculas/main/icono.png" class="absolute inset-0 w-full h-full object-contain -translate-y-16 animate-pulse drop-shadow-[0_0_25px_rgba(250,204,21,0.3)]">
-        
-        <div class="absolute bottom-16 left-0 right-0 text-center space-y-2 z-10 px-6">
-            <h1 class="text-3xl font-black text-yellow-400 italic tracking-tighter bg-slate-950/60 inline-block p-1 rounded">EL COLECCIONISTA</h1>
-            <p class="text-slate-500 text-xs tracking-[0.4em] uppercase bg-slate-950/60 inline-block p-1 rounded">De Matrículas</p>
-            <p class="mt-8 text-slate-400 text-sm animate-bounce font-bold bg-slate-900 px-6 py-2 rounded-full inline-block">Toca para empezar</p>
+    <div id="login-screen" class="hidden fixed inset-0 flex flex-col items-center justify-between bg-slate-950 z-[500] p-6 py-12">
+        <div class="flex flex-col items-center w-full">
+            <img src="https://raw.githubusercontent.com/jakeko99-pixel/matriculas/main/icono.png" class="w-32 h-32 object-contain mb-6 drop-shadow-[0_0_15px_rgba(250,204,21,0.2)] animate-pulse">
+            <h2 class="text-2xl font-black text-white italic">¿Quién caza hoy?</h2>
         </div>
-    </div>
+        
+        <div class="grid grid-cols-1 gap-4 w-full max-w-sm my-8">
+            <button onclick="selectPlayer('NOA')" class="bg-slate-900 p-4 rounded-3xl flex items-center gap-4 border border-slate-800 active:border-pink-500 transition-all shadow-lg hover:bg-slate-800">
+                <img src="https://github.com/jakeko99-pixel/matriculas/blob/main/Noa%20Lodres%20Juego.jpeg?raw=true" class="w-16 h-16 rounded-full border-2 border-pink-500 object-cover">
+                <div class="text-left">
+                    <span class="text-2xl font-black uppercase tracking-wide block leading-none mb-1">Noa</span>
+                    <span id="level-NOA" class="text-[10px] font-bold text-yellow-400 tracking-widest uppercase bg-slate-950 px-2 py-1 rounded border border-slate-800">Calculando...</span>
+                </div>
+            </button>
+            <button onclick="selectPlayer('ERIK')" class="bg-slate-900 p-4 rounded-3xl flex items-center gap-4 border border-slate-800 active:border-blue-500 transition-all shadow-lg hover:bg-slate-800">
+                <img src="https://github.com/jakeko99-pixel/matriculas/blob/main/Erik%20Juego.png?raw=true" class="w-16 h-16 rounded-full border-2 border-blue-500 object-cover">
+                <div class="text-left">
+                    <span class="text-2xl font-black uppercase tracking-wide block leading-none mb-1">Erik</span>
+                    <span id="level-ERIK" class="text-[10px] font-bold text-yellow-400 tracking-widest uppercase bg-slate-950 px-2 py-1 rounded border border-slate-800">Calculando...</span>
+                </div>
+            </button>
+            <button onclick="selectPlayer('FER')" class="bg-slate-900 p-4 rounded-3xl flex items-center gap-4 border border-slate-800 active:border-green-500 transition-all shadow-lg hover:bg-slate-800">
+                <img src="https://github.com/jakeko99-pixel/matriculas/blob/main/Fer%20juego.jpeg?raw=true" class="w-16 h-16 rounded-full border-2 border-green-500 object-cover">
+                <div class="text-left">
+                    <span class="text-2xl font-black uppercase tracking-wide block leading-none mb-1">Fer</span>
+                    <span id="level-FER" class="text-[10px] font-bold text-yellow-400 tracking-widest uppercase bg-slate-950 px-2 py-1 rounded border border-slate-800">Calculando...</span>
+                </div>
+            </button>
+        </div>
 
-        <button onclick="openStats()" class="bg-yellow-400 text-slate-950 font-black px-8 py-4 rounded-2xl w-full max-w-sm shadow-[0_0_20px_rgba(250,204,21,0.2)] active:scale-95 transition-transform flex items-center justify-center gap-2">
+        <button onclick="openStats()" class="bg-yellow-400 text-slate-950 font-black px-8 py-4 rounded-2xl w-full max-w-sm shadow-[0_0_20px_rgba(250,204,21,0.2)] active:scale-95 transition-transform flex items-center justify-center gap-2 mt-auto">
             <span>🏆</span> VER RANKING Y ESTADÍSTICAS
         </button>
     </div>
@@ -59,7 +77,6 @@
     </div>
 
     <div id="main-app" class="hidden flex-1 flex flex-col relative">
-        
         <header class="bg-slate-900 p-4 border-b border-slate-800 flex justify-between items-center shadow-md">
             <div class="flex items-center gap-3">
                 <img id="current-avatar" src="" class="w-10 h-10 rounded-full border-2 border-yellow-400 object-cover">
@@ -79,17 +96,13 @@
             <div class="w-full max-w-sm space-y-6">
                 <div class="text-center">
                     <p class="text-yellow-500 text-[10px] font-black tracking-[0.3em] uppercase mb-2">Nueva Matrícula</p>
-                    
                     <div class="relative flex items-stretch shadow-[0_0_30px_rgba(250,204,21,0.15)] rounded-2xl bg-white focus-within:ring-4 focus-within:ring-yellow-400/50 transition-all">
                         <div class="bg-blue-700 w-10 rounded-l-2xl flex flex-col items-center justify-center p-1">
                             <span class="text-[12px] font-black text-white">E</span>
                         </div>
-                        <input id="plate-input" type="number" pattern="[0-9]*" inputmode="numeric" placeholder="0000" 
-                            class="flex-1 bg-white text-slate-900 text-center text-6xl font-black plate-font outline-none py-6"
-                            onkeypress="if(event.key === 'Enter') addPlate()">
+                        <input id="plate-input" type="number" pattern="[0-9]*" inputmode="numeric" placeholder="0000" class="flex-1 bg-white text-slate-900 text-center text-6xl font-black plate-font outline-none py-6" onkeypress="if(event.key === 'Enter') addPlate()">
                     </div>
                 </div>
-
                 <button onclick="addPlate()" class="w-full bg-yellow-400 text-slate-950 font-black py-4 rounded-xl text-xl shadow-lg active:scale-95 transition-transform">
                     CAZAR (INTRO)
                 </button>
@@ -101,8 +114,7 @@
                 <h3 class="font-black text-yellow-400">Tus Últimas 10 Capturas</h3>
                 <button onclick="toggleRecent()" class="bg-slate-800 p-2 rounded text-xs font-bold">Cerrar ▼</button>
             </div>
-            <div id="recent-list" class="flex-1 overflow-y-auto p-4 space-y-2 bg-slate-900">
-                </div>
+            <div id="recent-list" class="flex-1 overflow-y-auto p-4 space-y-2 bg-slate-900"></div>
         </div>
 
         <footer class="bg-slate-950 p-4 border-t border-slate-800 grid grid-cols-2 gap-3 z-30">
@@ -130,6 +142,16 @@
             'FER': 'https://github.com/jakeko99-pixel/matriculas/blob/main/Fer%20juego.jpeg?raw=true'
         };
 
+        function getLevel(points) {
+            if (points < 50) return "🚶 Peatón";
+            if (points < 200) return "🗺️ Copiloto";
+            if (points < 500) return "🚗 Conductor";
+            if (points < 1000) return "🔍 Rastreador";
+            if (points < 2500) return "🦅 Cazador";
+            if (points < 5000) return "👑 Leyenda";
+            return "🌩️ Dios del Asfalto";
+        }
+
         function closeSplash() {
             document.getElementById('splash').classList.add('opacity-0');
             setTimeout(() => {
@@ -138,13 +160,8 @@
             }, 500);
         }
 
-        // --- SISTEMA DE ESTADÍSTICAS ---
         function isCapicua(str) { return str.length === 4 && str[0] === str[3] && str[1] === str[2]; }
-        
-        // FÓRMULA CORREGIDA: LAS ESCOBAS SUMAN 15
-        function isEscoba(str) { 
-            return str.length === 4 && (parseInt(str[0]) + parseInt(str[1]) + parseInt(str[2]) + parseInt(str[3]) === 15); 
-        }
+        function isEscoba(str) { return str.length === 4 && (parseInt(str[0]) + parseInt(str[1]) + parseInt(str[2]) + parseInt(str[3]) === 15); }
 
         function openStats() {
             document.getElementById('stats-modal').classList.remove('hidden');
@@ -161,11 +178,10 @@
             const users = globalDataCache.users;
             const globalPlates = globalDataCache.plates || {};
             
-            // Reconstruir todas las matrículas únicas del mundo
             let allUniquePlates = new Set();
             for(let key in globalPlates) {
-                if(key.includes('_')) allUniquePlates.add(key.split('_')[1]); // Viejas
-                else allUniquePlates.add(key); // Nuevas
+                if(key.includes('_')) allUniquePlates.add(key.split('_')[1]);
+                else allUniquePlates.add(key);
             }
             
             let totalWorld = allUniquePlates.size;
@@ -184,21 +200,18 @@
                 <h3 class="text-white font-black text-xl mt-6 mb-2 flex items-center gap-2">🏆 Ranking Detallado</h3>
             `;
 
-            // Procesar datos de cada jugador
             let playersStats = [];
-            for(let playerName of ['NOA', 'ERIK', 'FER']) { // Fijos para asegurar orden
+            for(let playerName of ['NOA', 'ERIK', 'FER']) {
                 let pData = users[playerName] || {};
                 let platesCount = 0;
                 let capicuas = 0;
                 let escobas = 0;
 
-                // Contar nuevas
                 for(let p in pData.my_plates || {}) {
                     platesCount++;
                     if(isCapicua(p)) capicuas++;
                     if(isEscoba(p)) escobas++;
                 }
-                // Contar viejas de la base global
                 for(let key in globalPlates) {
                     if(key.startsWith(playerName + '_')) {
                         let num = key.split('_')[1];
@@ -217,17 +230,22 @@
                 });
             }
 
-            playersStats.sort((a,b) => b.points - a.points); // Ordenar por puntos
+            playersStats.sort((a,b) => b.points - a.points);
 
             playersStats.forEach((p, index) => {
                 let badge = index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉';
+                let rankLevel = getLevel(p.points); // Aquí también mostramos el nivel en el ranking de paso
+                
                 html += `
                     <div class="bg-slate-800 rounded-2xl p-4 flex flex-col gap-3 border border-slate-700">
                         <div class="flex justify-between items-center border-b border-slate-700 pb-3">
                             <div class="flex items-center gap-3">
                                 <span class="text-2xl">${badge}</span>
                                 <img src="${defaultAvatars[p.name]}" class="w-10 h-10 rounded-full border border-slate-500">
-                                <span class="font-black text-lg uppercase">${p.name}</span>
+                                <div class="flex flex-col">
+                                    <span class="font-black text-lg uppercase leading-none">${p.name}</span>
+                                    <span class="text-[10px] text-yellow-400 font-bold tracking-widest uppercase">${rankLevel}</span>
+                                </div>
                             </div>
                             <div class="text-right">
                                 <span class="text-2xl font-black text-yellow-400 leading-none block">${p.points}</span>
@@ -255,7 +273,6 @@
             content.innerHTML = html;
         }
 
-        // --- SISTEMA DE JUEGO PRINCIPAL ---
         function selectPlayer(name) {
             currentPlayer = name;
             document.getElementById('login-screen').classList.add('hidden');
@@ -268,11 +285,18 @@
         db.ref().on('value', (snap) => {
             globalDataCache = snap.val() || { users: {}, plates: {} };
             
+            if(globalDataCache.users) {
+                ['NOA', 'ERIK', 'FER'].forEach(name => {
+                    const pts = globalDataCache.users[name]?.points || 0;
+                    const levelElement = document.getElementById(`level-${name}`);
+                    if(levelElement) levelElement.innerText = getLevel(pts);
+                });
+            }
+
             if(currentPlayer) {
                 const myPoints = globalDataCache.users[currentPlayer]?.points || 0;
                 document.getElementById('user-points').innerText = myPoints;
 
-                // Reconstruir lista personal consolidada
                 consolidatedUserPlates = {};
                 const newPlates = globalDataCache.users[currentPlayer]?.my_plates || {};
                 for(let p in newPlates) {
@@ -289,7 +313,6 @@
                 }
                 renderRecentPlates();
             }
-            // Si el modal de stats está abierto, actualizarlo en vivo
             if(!document.getElementById('stats-modal').classList.contains('hidden')) renderStats();
         });
 
@@ -304,10 +327,9 @@
 
         function renderRecentPlates() {
             const list = document.getElementById('recent-list');
-            // Ordenar por tiempo (las nuevas tienen timestamp, las viejas 0)
             const sorted = Object.entries(consolidatedUserPlates)
                 .sort((a,b) => b[1].time - a[1].time)
-                .slice(0, 10); // Solo las 10 últimas
+                .slice(0, 10);
 
             if(sorted.length === 0) {
                 list.innerHTML = '<p class="text-slate-500 text-center text-sm mt-4">Aún no has cazado nada.</p>';
@@ -333,7 +355,7 @@
             const text = document.getElementById('toast-text');
             
             toast.classList.remove('hidden', 'toast-active');
-            void toast.offsetWidth; // Forzar reinicio de animación
+            void toast.offsetWidth; 
             
             if(pts === 2) {
                 toast.className = "fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 px-10 py-6 rounded-full font-black text-6xl z-[9999] shadow-[0_10px_50px_rgba(249,115,22,0.8)] bg-gradient-to-r from-orange-500 to-red-500 text-white toast-active";
@@ -346,7 +368,6 @@
                 text.innerText = "REPETIDA ❌";
             }
 
-            // Ocultar del todo cuando acabe la animación (1.5s)
             setTimeout(() => { toast.classList.add('hidden'); toast.classList.remove('toast-active'); }, 1500);
         }
 
@@ -410,5 +431,3 @@
     </script>
 </body>
 </html>
-
-
