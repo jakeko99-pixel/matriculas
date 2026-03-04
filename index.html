@@ -127,7 +127,7 @@
     <div id="main-app" class="hidden flex-1 flex flex-col relative w-full h-full overflow-hidden">
         <header class="bg-slate-900 p-4 border-b border-slate-800 flex justify-between items-center shadow-md shrink-0">
             <div class="flex items-center gap-3">
-                <img id="current-avatar" src="" class="w-10 h-10 rounded-full border-2 border-yellow-400 object-cover shrink-0">
+                <img id="current-avatar" onclick="switchUser()" src="" class="w-10 h-10 rounded-full border-2 border-yellow-400 object-cover shrink-0 cursor-pointer active:scale-90 transition-transform shadow-[0_0_10px_rgba(250,204,21,0.5)]">
                 <h1 id="current-name" class="font-black text-xl text-white uppercase tracking-wider truncate"></h1>
             </div>
             <div class="text-right shrink-0">
@@ -770,6 +770,15 @@
                 db.ref(`plates/${plateData.originalKey}`).remove();
             }
         }
+        function switchUser() {
+            // Ocultamos la app principal
+            document.getElementById('main-app').classList.add('hidden');
+            // Quitamos al jugador actual por seguridad
+            currentPlayer = null;
+            // Volvemos a mostrar el menú de inicio
+            document.getElementById('login-screen').classList.remove('hidden');
+        }
     </script>
 </body>
 </html>
+
