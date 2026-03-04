@@ -189,10 +189,19 @@
             return 1;
         }
 
-        // Función central para calcular puntos exactos de una matrícula
+        // --- NUEVA LÓGICA DE PUNTOS EXACTOS (SIN DESBALANCEO) ---
         function calculateExactPoints(plateStr, isFirst) {
             let base = getPlateBaseValue(plateStr);
-            return isFirst ? (base * 2) : base;
+            
+            // Si no eres el primero, te llevas el valor base.
+            if (!isFirst) return base;
+            
+            // Si eres el primero, aplicamos el bonus controlado:
+            if (base === 1) {
+                return base + 1; // Normal: 1 + 1 extra = 2 pts
+            } else {
+                return base + 5; // Especiales: Base + 5 extra
+            }
         }
 
         function getLevel(points) {
@@ -409,7 +418,7 @@
                         let num = key.split('_')[1];
                         if(!arrAportadas.includes(num)) {
                             arrAportadas.push(num);
-                            // Las antiguas con prefijo implicaban ser el descubridor (x2)
+                            // Las antiguas con prefijo implicaban ser el descubridor
                             truePoints += calculateExactPoints(num, true); 
                             
                             if(isCapicua(num)) arrCapicuas.push(num);
@@ -637,7 +646,7 @@
                     isBonus = false;
                 }
 
-                // Calcular puntos según la matrícula
+                // Calcular puntos exactos según la nueva regla
                 const pts = calculateExactPoints(plate, isBonus);
 
                 // Si es primero, la registra en el mundo
